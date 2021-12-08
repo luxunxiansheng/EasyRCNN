@@ -36,10 +36,10 @@ class RPNTrainer:
         self.rpn = RPN(config).to(device)
 
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters())
-        if self.config.RPN.TRAIN.USE_ADAM:
-            self.optimizer = optim.Adam(params=params,lr=float(config.RPN.TRAIN.LEARNING_RATE))
-        else:
-            self.optimizer = optim.SGD(params=params,lr=float(config.RPN.TRAIN.LEARNING_RATE),momentum=float(config.RPN.TRAIN.MOMENTUM))
+    
+        self.optimizer = optim.SGD(params=params,lr=float(config.RPN.TRAIN.LEARNING_RATE),
+                                    momentum=float(config.RPN.TRAIN.MOMENTUM),
+                                    weight_decay=config.RPN.TRAIN.WEIGHT_DECAY)
 
         self.loss  = RPNLoss(config,device)
                 
