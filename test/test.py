@@ -246,7 +246,7 @@ class TestProposalTargetCreator(unittest.TestCase):
         print(gt_roi_loc.shape)
         print(gt_roi_label)
 
-#@unittest.skip('passed')
+unittest.skip('passed')
 class TestFastRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor('vgg16')
