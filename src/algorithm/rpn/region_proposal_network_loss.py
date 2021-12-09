@@ -57,19 +57,22 @@ class RPNLoss(nn.Module):
         inside_weight[(target_labels > 0).view(-1,1).expand_as(inside_weight)] = 1
         predicted_locs = predicted_locs.permute(1,2,0).contiguous().view(-1,4)
 
+        predicted_locs = inside_weight * predicted_locs
+        target_locs = inside_weight * target_locs
+
         # loc_loss is the sum of the smooth L1 loss of the four coordinates of the positive anchors
-        loc_loss = self._soomth_l1_loss(predicted_locs, target_locs, inside_weight,self.sigma)
+        loc_loss = self._soomth_l1_loss(predicted_locs, target_locs,self.sigma)
 
         # Normalize by the number of the  positives
         regression_loss = loc_loss/((target_labels>0).sum().float())  
 
         return classification_loss,regression_loss
 
-    def _soomth_l1_loss(self, predicted_locs, target_locs, in_weight,sigma):
+    def _soomth_l1_loss(self, predicted_locs, target_locs,sigma):
         sigma2 = sigma**2
-        diff = in_weight * (predicted_locs - target_locs)
+        diff = predicted_locs - target_locs
         abs_diff = diff.abs()
         flag = (abs_diff.data < (1.0 / sigma2)).float()
-        loss = (flag * (sigma2 / 2.) * (diff ** 2) +(1 - flag) * (abs_diff - 0.5 / sigma2))
+        loss = flag * (sigma2 / 2.) * (diff ** 2) +(1 - flag) * (abs_diff - 0.5 / sigma2)
         return loss.sum() 
 

@@ -53,13 +53,13 @@ class ProposalTargetCreator(object):
         keep_index = torch.concat((positive_index,negative_index),dim=0)
         gt_roi_label = gt_roi_label[keep_index]
         gt_roi_label[n_positive_roi_per_image:] = 0  # negative labels --> 0
-        roi = proposed_roi_bboxs[keep_index]
+        sampled_roi = proposed_roi_bboxs[keep_index]
         gt_bboxes = gt_bboxs[argmax_ious_for_proposed_roi_bboxs[keep_index]]
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
-        gt_roi_loc = Utility.bbox2loc(roi, gt_bboxes)
+        gt_roi_loc = Utility.bbox2loc(sampled_roi, gt_bboxes)
         gt_roi_loc = (gt_roi_loc - loc_normalize_mean) /loc_normalize_std
 
-        return roi, gt_roi_loc, gt_roi_label
+        return sampled_roi, gt_roi_loc, gt_roi_label
 
 

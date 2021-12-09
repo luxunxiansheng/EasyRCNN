@@ -260,12 +260,27 @@ class TestFastRCNN(unittest.TestCase):
         feature= self.feature_extractor(IMG)
         predicted_locs, predicted_scores = self.rpn(feature)
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_locs[0],predicted_scores[0],FEATURE_HEIGHT,FEATURE_WIDTH,IMG_HEIGHT,IMG_WIDTH)
         
-        proposed_roi_bbox_indices = torch.zeros(len(proposed_roi_bboxes))
-        roi_cls_loc,roi_cls_score = self.fast_rcnn(feature,proposed_roi_bboxes,proposed_roi_bbox_indices)
-        print(roi_cls_loc.shape)
-        print(roi_cls_score.shape)
+        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_locs[0],predicted_scores[0],FEATURE_HEIGHT,FEATURE_WIDTH,IMG_HEIGHT,IMG_WIDTH)
+        print('Proposed ROI BBOXES Size:{}'.format(proposed_roi_bboxes.shape))
+
+        sampled_roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
+        print('Sampled ROI Size:{}'.format(sampled_roi.shape))
+        print('GT ROI LOC Size:{}'.format(gt_roi_loc.shape))
+        print('GT ROI LABEL Size:{}'.format(gt_roi_label.shape))
+
+        sampled_roi_bbox_indices = torch.zeros(len(sampled_roi))
+        predicted_roi_cls_loc,predicted_roi_cls_score = self.fast_rcnn(feature,sampled_roi,sampled_roi_bbox_indices)
+
+        print('Predicted ROI CLS LOC Size:{}'.format(predicted_roi_cls_loc.shape))
+        print('Predicted ROI CLS SCORE Size:{}'.format(predicted_roi_cls_score.shape))
+
+        
+
+
+
+
+    
     
 
 if __name__ == "__main__":

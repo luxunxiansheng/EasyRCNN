@@ -6,13 +6,11 @@ from common import FCBlock, weights_normal_init
 
 class FastRCNN(nn.Module):
     def __init__(self, config):
-        # n_class includes the background
         super().__init__()
     
         self.roi_pool = RoIPool((config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.ROI_SIZE),config.FAST_RCNN.SPATIAL_SCALE)
 
-        self.fc6 = FCBlock(config.FAST_RCNN.IN_CHANNELS*config.FAST_RCNN.ROI_SIZE*config.FAST_RCNN.ROI_SIZE,
-                        config.FAST_RCNN.FC7_CHANNELS)
+        self.fc6 = FCBlock(config.FAST_RCNN.IN_CHANNELS*config.FAST_RCNN.ROI_SIZE*config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.FC7_CHANNELS)
         self.fc7 = FCBlock(config.FAST_RCNN.FC7_CHANNELS, config.FAST_RCNN.FC7_CHANNELS)
         
         self.loc = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,  (config.FAST_RCNN.NUM_CLASSES+1) * 4)
