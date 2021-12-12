@@ -1,16 +1,19 @@
-import torch
-from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
+
+import torch
 import torch.optim as optim
+from torch.utils.data.dataloader import DataLoader
+
 from fast_rcnn.fast_rcnn_network import FastRCNN
 from feature_extractor import FeatureExtractorFactory
-
 from rpn.anchor_creator import AnchorCreator
 from rpn.anchor_target_creator import AnchorTargetCreator
 from rpn.proposal_creator import ProposalCreator
 from rpn.proposal_target_creator import ProposalTargetCreator
 from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss
+from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
+
 
 
 class FasterRCNNTrainer:
@@ -27,13 +30,14 @@ class FasterRCNNTrainer:
         self.anchor_creator = AnchorCreator(config,device)
         self.anchor_target_creator = AnchorTargetCreator(config,device)
 
-        self.proposal_creator = ProposalCreator(config,device)
-        self.proposal_target_creator = ProposalTargetCreator(config,device)
+        self.proposal_creator = ProposalCreator(config)
+        self.proposal_target_creator = ProposalTargetCreator(config)
         
         self.rpn = RPN(config).to(device)
         self.fast_rcnn = FastRCNN(config).to(device)
-        self.fast_rcnn_loss = RPNLoss(config)
+        
         self.rpn_loss  = RPNLoss(config,device)   
+        self.fast_rcnn_loss = FastRCNNLoss(config)
 
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
     
@@ -71,10 +75,17 @@ class FasterRCNNTrainer:
                     total_cls_loss+= rpn_cls_loss
                     total_reg_loss+= rpn_reg_los
 
-                    proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,rpn_predicted_scores,rpn_predicted_locs,img_height,img_width,feature_height,feature_width)
-                    sampled_roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,gt_bboxes,gt_labels)
-                    sampled_roi_bbox_indices = torch.zeros(len(sampled_roi))
-                    predicted_roi_cls_loc,predicted_roi_cls_score = self.fast_rcnn(feature,sampled_roi,sampled_roi_bbox_indices)
+                    proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,
+                                                                        rpn_predicted_scores,
+                                                                        rpn_predicted_locs,
+                                                                        img_height,
+                                                                        img_width,
+                                                                        feature_height,
+                                                                        feature_width)
+
+                    sampled_roi,gt_roi_label,gt_roi_loc = self.proposal_target_creator.generate(proposed_roi_bboxes,gt_bboxes,gt_labels,img_height,img_width)
+                    sampled_roi_bbox_indices = torch.zeros(len(sampled_roi),device=self.device)
+                    predicted_roi_cls_score,predicted_roi_cls_loc = self.fast_rcnn(feature,sampled_roi,sampled_roi_bbox_indices)
 
                     roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss(predicted_roi_cls_score,predicted_roi_cls_loc,gt_roi_label,gt_roi_loc)
                     total_cls_loss+= roi_cls_loss
@@ -82,7 +93,8 @@ class FasterRCNNTrainer:
 
                 total_loss = total_cls_loss + total_reg_loss
                 self.optimizer.zero_grad()
-                total_loss.backward()
+                with torch.autograd.set_detect_anomaly(True):
+                    total_loss.backward()
                 self.optimizer.step()
 
                 steps += 1

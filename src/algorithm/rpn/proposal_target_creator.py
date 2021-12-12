@@ -60,6 +60,6 @@ class ProposalTargetCreator(object):
         gt_roi_loc = Utility.bbox2loc(sampled_roi, gt_bboxes)
         gt_roi_loc = (gt_roi_loc - loc_normalize_mean) /loc_normalize_std
 
-        return sampled_roi, gt_roi_loc, gt_roi_label
+        return sampled_roi,gt_roi_label,gt_roi_loc
 
 

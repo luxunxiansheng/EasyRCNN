@@ -24,11 +24,11 @@ class FastRCNN(nn.Module):
         indices_and_rois = indices_and_rois[:, [0, 2, 1, 4, 3]]
         indices_and_rois = indices_and_rois.contiguous()
 
-        pool = self.roi_pool(feature, indices_and_rois)
+        pool = self.roi_pool(feature.unsqueeze(0) , indices_and_rois)
         pool = pool.view(pool.size(0), -1)
         fc6 = self.fc6(pool)
         fc7 = self.fc7(fc6)
-        roi_locs = self.loc(fc7)
         roi_scores = self.score(fc7)
+        roi_locs = self.loc(fc7)
 
-        return roi_locs, roi_scores
+        return roi_scores,roi_locs 

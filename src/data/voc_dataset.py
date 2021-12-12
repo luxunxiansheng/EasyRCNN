@@ -66,7 +66,7 @@ class VOCDataset(data.Dataset):
         image_file = os.path.join(self.data_dir, 'JPEGImages', id_ + '.jpg')
         image = read_image(image_file)
         bboxs = torch.tensor(bboxs, dtype=torch.float32)
-        labels = torch.tensor(labels, dtype=torch.int32)
+        labels = torch.tensor(labels, dtype=torch.long)
         difficult = torch.tensor(difficult, dtype=torch.uint8)
         
         return image, bboxs,labels, difficult,image_file

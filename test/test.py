@@ -12,6 +12,7 @@ import unittest
 
 import torch
 from config import get_default_config
+from voc_dataset import VOCDataset
 from feature_extractor import FeatureExtractorFactory, VGG16FeatureExtractor
 from rpn.anchor_creator import AnchorCreator
 from rpn.anchor_target_creator import AnchorTargetCreator
@@ -21,14 +22,13 @@ from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from rpn.region_proposal_network_trainer import RPNTrainer
+from fast_rcnn.fast_rcnn_network import FastRCNN
+from faster_rcnn.faster_rcnn_trainer import FasterRCNNTrainer
 
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 from utility import Utility
 from visual_tool import draw_img_bboxes_labels
-from voc_dataset import VOCDataset
-
-from fast_rcnn.fast_rcnn_network import FastRCNN
 
 IMG    =  torch.randn(1, 3, 800,800).float()
 IMG_WIDTH = IMG.shape[-1]
@@ -43,7 +43,6 @@ FEATURE_WIDTH  = int(IMG_WIDTH / FEATURE_STRIDE)
 IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
-
 
 
 config = get_default_config()
@@ -262,13 +261,13 @@ class TestFastRCNN(unittest.TestCase):
         proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print('Proposed ROI BBOXES Size:{}'.format(proposed_roi_bboxes.shape))
 
-        sampled_roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
+        sampled_roi,gt_roi_label,gt_roi_loc= self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
         print('Sampled ROI Size:{}'.format(sampled_roi.shape))
         print('GT ROI LOC Size:{}'.format(gt_roi_loc.shape))
         print('GT ROI LABEL Size:{}'.format(gt_roi_label.shape))
 
         sampled_roi_bbox_indices = torch.zeros(len(sampled_roi))
-        predicted_roi_cls_loc,predicted_roi_cls_score = self.fast_rcnn(feature,sampled_roi,sampled_roi_bbox_indices)
+        predicted_roi_cls_score,predicted_roi_cls_loc = self.fast_rcnn(feature[0],sampled_roi,sampled_roi_bbox_indices)
 
         print('Predicted ROI CLS LOC Size:{}'.format(predicted_roi_cls_loc.shape))
         print('Predicted ROI CLS SCORE Size:{}'.format(predicted_roi_cls_score.shape))
@@ -276,7 +275,18 @@ class TestFastRCNN(unittest.TestCase):
         cls_loss,reg_loss = self.fast_rcnn_loss(predicted_roi_cls_score,predicted_roi_cls_loc,gt_roi_label,gt_roi_loc)
         print(cls_loss)
         print(reg_loss)
-    
+
+unittest.skip('passed')    
+class TestFasterRCNNTrainer(unittest.TestCase):
+    def setUp(self):
+        self.voc_dataset = VOCDataset(config)
+        self.writer = SummaryWriter(config.TEST.TEMP_DIR)
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.trainer = FasterRCNNTrainer(config,self.voc_dataset,writer=self.writer,device=device)
+        
+    def test_train(self):
+        self.trainer.train()
+
 
 if __name__ == "__main__":
     print("Running RPN test:")

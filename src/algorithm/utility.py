@@ -26,7 +26,7 @@ class Utility:
         w = torch.exp(dw) * src_width.unsqueeze(1)
         h = torch.exp(dh) * src_height.unsqueeze(1)
         
-        dst_bbox = torch.zeros(loc.shape, dtype=loc.dtype)
+        dst_bbox = torch.zeros(loc.shape, dtype=loc.dtype,device=loc.device)
         dst_bbox[:, 0::4] = centor_y - 0.5 * h
         dst_bbox[:, 1::4] = centor_x - 0.5 * w
         dst_bbox[:, 2::4] = centor_y + 0.5 * h
@@ -46,7 +46,7 @@ class Utility:
         target_ctr_y = target_bbox[:, 0] + 0.5 * target_height
         target_ctr_x = target_bbox[:, 1] + 0.5 * target_width
         
-        eps = torch.tensor(torch.finfo().eps)
+        eps = torch.tensor(torch.finfo().eps,device=source_bbox.device)
         source_roi_width = torch.maximum(source_roi_width, eps)
         source_roi_height = torch.maximum(source_roi_height, eps)
         
