@@ -97,7 +97,7 @@ class TestAnchorTargetCreator(unittest.TestCase):
         target_labels,target_locs = self.anchor_target_creator.generate(anchors_of_img,bboxes,img_height,img_width)
         self.assertEqual((target_labels==1).nonzero().squeeze().shape,torch.Size([128]))
                     
-    @unittest.skip("Passed")
+
     def test_anchor_target_creator(self):
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
         self.assertEqual(anchors_of_img.shape, torch.Size([FEATURE_WIDTH*FEATURE_HEIGHT*9, 4]))
@@ -197,7 +197,7 @@ class TestVOCDataset(unittest.TestCase):
 
         self.writer.add_images('image',imgs,) 
 
-unittest.skip('testing')
+@unittest.skip('testing')
 class TestRPNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
@@ -219,7 +219,7 @@ class TestProposalCreator(unittest.TestCase):
     
     def test_generate(self):
         feature= self.feature_extractor(IMG)
-        predicted_locs, predicted_scores = self.rpn(feature)
+        predicted_scores,predicted_locs= self.rpn(feature)
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
         proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(proposed_roi_bboxes.shape)
@@ -235,7 +235,7 @@ class TestProposalTargetCreator(unittest.TestCase):
     
     def test_generate(self):
         feature= self.feature_extractor(IMG)
-        predicted_locs, predicted_scores = self.rpn(feature)
+        predicted_scores,predicted_locs  = self.rpn(feature)   
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
         proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
@@ -256,7 +256,7 @@ class TestFastRCNN(unittest.TestCase):
     
     def test_forward(self):
         feature= self.feature_extractor(IMG)
-        predicted_locs, predicted_scores = self.rpn(feature)
+        predicted_scores,predicted_locs  = self.rpn(feature)
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
         
         proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)

@@ -1,13 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules.module import T
 
 from rpn.anchor_creator import AnchorCreator
 from rpn.anchor_target_creator import AnchorTargetCreator
 
 class RPNLoss(nn.Module):
     """calculate the loss for a single image"""
-    def __init__(self,config,device):
+    def __init__(self,config,device='cpu'):
         super().__init__()
         self.sigma = config.RPN.RPN_SIGMA
         self.device = device
@@ -19,6 +20,9 @@ class RPNLoss(nn.Module):
     def forward(self,predicted_scores,predicted_locs,target_bboxs,img_height,img_width,feature_height,feature_width):
         anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
         target_labels,target_locs = self.anchor_target_creator.generate(anchors_of_img,target_bboxs,img_height,img_width)
+
+        if target_labels is None:
+            return torch.tensor(0.0,device=self.device),torch.tensor(0.0,device=self.device)
 
         # we only concern those anchors which have positive labels and negative labels
         target_keep =  target_labels.ne(-1).nonzero().squeeze()
