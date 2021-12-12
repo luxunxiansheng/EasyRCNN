@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class FastRCNNLoss(nn.Module):
-    def __init__(self,config,device):
+    def __init__(self,config,device='cpu'):
         super().__init__()
         self.roi_sigma = config.FAST_RCNN.ROI_SIGMMA
         self.device = device
@@ -12,10 +12,10 @@ class FastRCNNLoss(nn.Module):
     def forward(self,predicted_scores,predicted_locs,target_labels,target_locs):
         classfication_loss = F.cross_entropy(predicted_scores,target_labels)
 
-        n_sample = predicted_locs.shape[0]
+        n_sample = target_locs.shape[0]
 
-        positive_wieight = torch.zeros(target_locs.shape[0]).to(self.device)
-        positive_wieight[(target_labels > 0).view(-1,1).expand_as([positive_wieight])] = 1
+        positive_wieight = torch.zeros(target_locs.shape).to(self.device)
+        positive_wieight[(target_labels > 0).view(-1,1).expand_as(positive_wieight)] = 1
 
         predicted_locs = predicted_locs.contiguous().view(n_sample,-1,4)
         predicted_locs = predicted_locs[torch.arange(0,n_sample).long(),target_labels.long()]

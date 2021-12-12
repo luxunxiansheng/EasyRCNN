@@ -28,7 +28,7 @@ class FastRCNN(nn.Module):
         pool = pool.view(pool.size(0), -1)
         fc6 = self.fc6(pool)
         fc7 = self.fc7(fc6)
-        roi_cls_locs = self.loc(fc7)
+        roi_locs = self.loc(fc7)
         roi_scores = self.score(fc7)
 
-        return roi_cls_locs, roi_scores
+        return roi_locs, roi_scores

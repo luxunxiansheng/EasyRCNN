@@ -20,10 +20,10 @@ class ProposalCreator:
                 anchors_of_image,  # [Num_anchors]
                 predicted_scores,  # [Num_base_anchors*2,feature_h,feature_w]
                 predicted_locs,    # [Num_base_anchors*4,feature_h,feature_w]
-                feature_height,
-                feature_width,
                 img_height,
                 img_width,
+                feature_height,
+                feature_width,
                 scale=1.):
                 
         #------------------------Locs---------------------------------#

@@ -1,9 +1,8 @@
 import logging
 
 import torch
-from torch.nn import parameter
 import torch.optim as optim
-from torch.utils.data.dataloader import T, DataLoader
+from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
 from rpn.anchor_creator import AnchorCreator
@@ -52,22 +51,15 @@ class RPNTrainer:
 
                 images,bboxes,labels = images.to(self.device),bboxes.to(self.device),labels.to(self.device)
                 
-                feature = self.feature_extractor(images.float())
-                predicted_scores, predicted_locs = self.rpn(feature)
-
-                feature_height,feature_width = feature.shape[2:]
-                anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
+                features = self.feature_extractor(images.float())
+                predicted_scores, predicted_locs = self.rpn(features)
                 
                 total_cls_loss = torch.tensor(0.0,requires_grad=True).to(self.device)
                 total_reg_loss = torch.tensor(0.0,requires_grad=True).to(self.device)
                 for image_index in range(images.shape[0]):
-                    img_height,img_width = images.shape[2:]
-                    target_labels,target_locs = self.anchor_target_creator.generate(anchors_of_img,bboxes[image_index],img_height,img_width)
-                    
-                    if target_labels is None:
-                        continue
-
-                    cls_loss,reg_los=self.loss(predicted_scores[image_index],predicted_locs[image_index],target_labels,target_locs)
+                    img_height,img_width = images[image_index].shape[1:]
+                    feature_height,feature_width = features[image_index].shape[1:]
+                    cls_loss,reg_los=self.loss(predicted_scores[image_index],predicted_locs[image_index],bboxes[image_index],img_height,img_width,feature_height,feature_width)
                     total_cls_loss+= cls_loss
                     total_reg_loss+= reg_los
                     

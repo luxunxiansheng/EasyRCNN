@@ -19,6 +19,7 @@ from rpn.proposal_creator import ProposalCreator
 from rpn.proposal_target_creator import ProposalTargetCreator
 from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss
+from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from rpn.region_proposal_network_trainer import RPNTrainer
 
 from torch.utils.tensorboard import SummaryWriter
@@ -118,7 +119,7 @@ class TestProposalCreator(unittest.TestCase):
     def test_rpn(self):
         predcited_locs, predcited_scores = self.rpn(self.feature_extractor(IMG))
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        roi = self.proposal_creator.generate(anchors_of_img, predcited_locs[0], predcited_scores[0], IMG_HEIGHT, IMG_WIDTH)
+        roi = self.proposal_creator.generate(anchors_of_img, predcited_scores[0], predcited_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(roi.shape)
 
 @unittest.skip('passed')
@@ -161,13 +162,10 @@ class TestRPNLoss(unittest.TestCase):
         
     def test_rpn_loss(self):
         predicted_scores,predicted_locs = self.rpn(self.feature)
-        anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        target_lables,target_locs = self.anchor_target_creator.generate(anchors_of_img, BBOX,IMG_HEIGHT, IMG_WIDTH)
-
-        if target_lables is not None:
-            cls_loss,reg_loss = self.rpn_loss(predicted_scores[0],predicted_locs[0],target_lables,target_locs)
-            print(cls_loss)
-            print(reg_loss)
+        
+        cls_loss,reg_loss = self.rpn_loss(predicted_scores[0],predicted_locs[0],BBOX[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
+        print(cls_loss)
+        print(reg_loss)
 
 @unittest.skip('passed')
 class TestVOCDataset(unittest.TestCase):
@@ -192,15 +190,14 @@ class TestVOCDataset(unittest.TestCase):
             print(lables.shape)
             print(diff.shape)
             print(img_file)
-
-        
+            
             lable_names = [VOCDataset.VOC_BBOX_LABEL_NAMES[i] for i in lables]
             img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=bboxes,labels=lable_names)
             imgs[i,:,:,:] = img_and_bbox
 
         self.writer.add_images('image',imgs,) 
 
-@unittest.skip('testing')
+unittest.skip('testing')
 class TestRPNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
@@ -224,7 +221,7 @@ class TestProposalCreator(unittest.TestCase):
         feature= self.feature_extractor(IMG)
         predicted_locs, predicted_scores = self.rpn(feature)
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_locs[0],predicted_scores[0],FEATURE_HEIGHT,FEATURE_WIDTH,IMG_HEIGHT,IMG_WIDTH)
+        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(proposed_roi_bboxes.shape)
 
 @unittest.skip('passed')
@@ -240,13 +237,13 @@ class TestProposalTargetCreator(unittest.TestCase):
         feature= self.feature_extractor(IMG)
         predicted_locs, predicted_scores = self.rpn(feature)
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_locs[0],predicted_scores[0],FEATURE_HEIGHT,FEATURE_WIDTH,IMG_HEIGHT,IMG_WIDTH)
+        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
         print(roi.shape)
         print(gt_roi_loc.shape)
         print(gt_roi_label)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestFastRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor('vgg16')
@@ -255,13 +252,14 @@ class TestFastRCNN(unittest.TestCase):
         self.anchor_creator = AnchorCreator(config)
         self.proposal_creator = ProposalCreator(config)
         self.anchor_target_creator = ProposalTargetCreator(config)
+        self.fast_rcnn_loss = FastRCNNLoss(config)
     
     def test_forward(self):
         feature= self.feature_extractor(IMG)
         predicted_locs, predicted_scores = self.rpn(feature)
         anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
         
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_locs[0],predicted_scores[0],FEATURE_HEIGHT,FEATURE_WIDTH,IMG_HEIGHT,IMG_WIDTH)
+        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print('Proposed ROI BBOXES Size:{}'.format(proposed_roi_bboxes.shape))
 
         sampled_roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
@@ -275,12 +273,9 @@ class TestFastRCNN(unittest.TestCase):
         print('Predicted ROI CLS LOC Size:{}'.format(predicted_roi_cls_loc.shape))
         print('Predicted ROI CLS SCORE Size:{}'.format(predicted_roi_cls_score.shape))
 
-        
-
-
-
-
-    
+        cls_loss,reg_loss = self.fast_rcnn_loss(predicted_roi_cls_score,predicted_roi_cls_loc,gt_roi_label,gt_roi_loc)
+        print(cls_loss)
+        print(reg_loss)
     
 
 if __name__ == "__main__":
