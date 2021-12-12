@@ -25,10 +25,6 @@ class RPNTrainer:
         self.writer = writer
         self.device = device
         self.epoches = config.RPN.TRAIN.EPOCHS 
-
-        self.anchor_creator = AnchorCreator(config,device)
-        self.anchor_target_creator = AnchorTargetCreator(config,device)
-        
         self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.RPN.TRAIN.NUM_WORKERS)    
 
         self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.RPN.BACKBONE).to(device)
