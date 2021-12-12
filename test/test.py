@@ -157,12 +157,11 @@ class TestRPNLoss(unittest.TestCase):
         self.rpn = RPN(config)
         self.rpn_loss = RPNLoss(config)
         self.anchor_creator = AnchorCreator(config)
-        self.anchor_target_creator = AnchorTargetCreator(config)
         
     def test_rpn_loss(self):
         predicted_scores,predicted_locs = self.rpn(self.feature)
-        
-        cls_loss,reg_loss = self.rpn_loss(predicted_scores[0],predicted_locs[0],BBOX[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
+        anchors_of_image = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
+        cls_loss,reg_loss = self.rpn_loss(anchors_of_image,predicted_scores[0],predicted_locs[0],BBOX,IMG_HEIGHT,IMG_WIDTH)
         print(cls_loss)
         print(reg_loss)
 
@@ -196,7 +195,7 @@ class TestVOCDataset(unittest.TestCase):
 
         self.writer.add_images('image',imgs,) 
 
-@unittest.skip('testing')
+unittest.skip('testing')
 class TestRPNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
@@ -215,7 +214,6 @@ class TestProposalCreator(unittest.TestCase):
         self.proposal_creator = ProposalCreator(config)
         self.anchor_creator = AnchorCreator(config)
 
-    
     def test_generate(self):
         feature= self.feature_extractor(IMG)
         predicted_scores,predicted_locs= self.rpn(feature)
@@ -276,7 +274,7 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')    
+@unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)

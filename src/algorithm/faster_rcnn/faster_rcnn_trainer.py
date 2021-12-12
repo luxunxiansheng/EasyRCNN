@@ -28,7 +28,7 @@ class FasterRCNNTrainer:
         self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.RPN.BACKBONE).to(device)
         
         self.anchor_creator = AnchorCreator(config,device)
-        self.anchor_target_creator = AnchorTargetCreator(config,device)
+    
 
         self.proposal_creator = ProposalCreator(config)
         self.proposal_target_creator = ProposalTargetCreator(config)
@@ -55,6 +55,7 @@ class FasterRCNNTrainer:
                 images,bboxes,labels = images.to(self.device),bboxes.to(self.device),labels.to(self.device)
                 
                 features = self.feature_extractor(images.float())
+
                 rpn_predicted_scores, rpn_predicted_locs = self.rpn(features)
                 
                 total_cls_loss = torch.tensor(0.0,requires_grad=True).to(self.device)
@@ -63,7 +64,7 @@ class FasterRCNNTrainer:
                     feature = features[image_index]
                     image = images[image_index]
                     feature_height,feature_width = feature.shape[1:]
-                    anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
+                    
                     img_height,img_width = image.shape[1:]
                     gt_bboxes = bboxes[image_index]
                     gt_labels = labels[image_index]
@@ -71,13 +72,14 @@ class FasterRCNNTrainer:
                     rpn_predicted_scores = rpn_predicted_scores[image_index]
                     rpn_predicted_locs = rpn_predicted_locs[image_index]
 
-                    rpn_cls_loss,rpn_reg_los=self.rpn_loss(rpn_predicted_scores,
-                                                        rpn_predicted_locs,
-                                                        gt_bboxes,
-                                                        img_height,
-                                                        img_width,
-                                                        feature_height,
-                                                        feature_width)
+                    anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
+                    rpn_cls_loss,rpn_reg_los=self.rpn_loss( anchors_of_img,
+                                                            rpn_predicted_scores,
+                                                            rpn_predicted_locs,
+                                                            gt_bboxes,
+                                                            img_height,
+                                                            img_width,
+                                                        )
                     
                     total_cls_loss+= rpn_cls_loss
                     total_reg_loss+= rpn_reg_los

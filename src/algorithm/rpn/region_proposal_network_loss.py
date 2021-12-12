@@ -13,12 +13,10 @@ class RPNLoss(nn.Module):
         self.sigma = config.RPN.RPN_SIGMA
         self.device = device
 
-        self.anchor_creator = AnchorCreator(config,device=device)
         self.anchor_target_creator = AnchorTargetCreator(config,device=device)
-        
 
-    def forward(self,predicted_scores,predicted_locs,target_bboxs,img_height,img_width,feature_height,feature_width):
-        anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
+    def forward(self,anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width):
+        
         target_labels,target_locs = self.anchor_target_creator.generate(anchors_of_img,target_bboxs,img_height,img_width)
 
         if target_labels is None:
@@ -29,10 +27,9 @@ class RPNLoss(nn.Module):
 
         #----------------------- classfication loss -----------------------#
         predicted_scores = predicted_scores.permute(1,2,0).contiguous().view(-1,2)
-        predicted_scores_softmax = F.softmax(predicted_scores,dim=1)
-        predicted_scores_softmax_keep = torch.index_select(predicted_scores_softmax,0,target_keep)
+        predicted_scores_keep = torch.index_select(predicted_scores,0,target_keep)
         target_labels_keep = torch.index_select(target_labels,0,target_keep) 
-        classification_loss = F.cross_entropy(predicted_scores_softmax_keep,target_labels_keep.long(),ignore_index=-1)
+        classification_loss = F.cross_entropy(predicted_scores_keep,target_labels_keep.long(),ignore_index=-1)
 
         #----------------------- regression loss --------------------------#
         inside_weight = torch.zeros(target_locs.shape,device=self.device)

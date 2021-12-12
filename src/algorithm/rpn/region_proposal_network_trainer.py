@@ -28,6 +28,8 @@ class RPNTrainer:
         self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.RPN.TRAIN.NUM_WORKERS)    
 
         self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.RPN.BACKBONE).to(device)
+        
+        self.anchor_creator = AnchorCreator(config,device)
         self.rpn = RPN(config).to(device)
 
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters())
@@ -55,7 +57,8 @@ class RPNTrainer:
                 for image_index in range(images.shape[0]):
                     img_height,img_width = images[image_index].shape[1:]
                     feature_height,feature_width = features[image_index].shape[1:]
-                    cls_loss,reg_los=self.loss(predicted_scores[image_index],predicted_locs[image_index],bboxes[image_index],img_height,img_width,feature_height,feature_width)
+                    anchors_of_image = self.anchor_creator.generate(feature_height,feature_width)
+                    cls_loss,reg_los=self.loss(anchors_of_image,predicted_scores[image_index],predicted_locs[image_index],bboxes[image_index],img_height,img_width)
                     total_cls_loss+= cls_loss
                     total_reg_loss+= reg_los
                     
