@@ -195,7 +195,7 @@ class TestVOCDataset(unittest.TestCase):
 
         self.writer.add_images('image',imgs,) 
 
-unittest.skip('testing')
+@unittest.skip('testing')
 class TestRPNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
@@ -274,7 +274,7 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-@unittest.skip('passed')    
+unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
