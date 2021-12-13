@@ -26,13 +26,13 @@ class FasterRCNNTrainer:
         self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.RPN.TRAIN.NUM_WORKERS)    
 
         self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.RPN.BACKBONE).to(device)
-        self.writer.add_graph(self.feature_extractor)
+        #self.writer.add_graph(self.feature_extractor)
 
         self.rpn = RPN(config).to(device)
-        self.writer.add_graph(self.rpn)
+        #self.writer.add_graph(self.rpn)
 
         self.fast_rcnn = FastRCNN(config).to(device)
-        self.writer.add_graph(self.fast_rcnn)
+        #self.writer.add_graph(self.fast_rcnn)
         
         self.anchor_creator = AnchorCreator(config,device)
     
@@ -40,7 +40,7 @@ class FasterRCNNTrainer:
         self.proposal_target_creator = ProposalTargetCreator(config)
         
         self.rpn_loss  = RPNLoss(config,device)   
-        self.fast_rcnn_loss = FastRCNNLoss(config)
+        self.fast_rcnn_loss = FastRCNNLoss(config,device)
 
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
     
@@ -88,12 +88,12 @@ class FasterRCNNTrainer:
                                                             img_width,
                                                         )
                     
-                    total_rpn_cls_loss += rpn_cls_loss
-                    total_rpn_reg_loss += rpn_reg_los
+                    total_rpn_cls_loss = total_rpn_cls_loss + rpn_cls_loss
+                    total_rpn_reg_loss = total_rpn_reg_loss + rpn_reg_los
 
                     proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,
-                                                                        rpn_predicted_scores,
-                                                                        rpn_predicted_locs,
+                                                                        rpn_predicted_scores.detach(),
+                                                                        rpn_predicted_locs.detach(),
                                                                         img_height,
                                                                         img_width,
                                                                         feature_height,
@@ -111,8 +111,9 @@ class FasterRCNNTrainer:
                                                                     predicted_roi_loc,
                                                                     gt_roi_label,
                                                                     gt_roi_loc)                                                                    
-                    total_roi_cls_loss+= roi_cls_loss
-                    total_roi_reg_loss+= roi_reg_loss
+                    
+                    total_roi_cls_loss = total_roi_cls_loss + roi_cls_loss
+                    total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
 
                 with torch.autograd.set_detect_anomaly(True): 
                     total_loss = total_rpn_cls_loss + total_rpn_reg_loss+total_roi_cls_loss+total_roi_reg_loss

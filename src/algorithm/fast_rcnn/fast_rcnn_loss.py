@@ -19,6 +19,10 @@ class FastRCNNLoss(nn.Module):
 
         predicted_locs = predicted_locs.contiguous().view(n_sample,-1,4)
         predicted_locs = predicted_locs[torch.arange(0,n_sample).long(),target_labels.long()]
+    
+        predicted_locs = positive_wieight * predicted_locs
+        target_locs    = positive_wieight * target_locs
+
         regression_loss = self._soomth_l1_loss(predicted_locs,target_locs,self.roi_sigma)
         regression_loss = regression_loss /((target_labels>0).sum().float())
 
