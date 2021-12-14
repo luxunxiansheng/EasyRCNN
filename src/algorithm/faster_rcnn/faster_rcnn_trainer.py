@@ -4,14 +4,8 @@ import torch
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
 
-from fast_rcnn.fast_rcnn_network import FastRCNN
 from faster_rcnn.faster_rcnn_network import FasterRCNN
-from feature_extractor import FeatureExtractorFactory
-from rpn.anchor_creator import AnchorCreator
-from rpn.anchor_target_creator import AnchorTargetCreator
-from rpn.proposal_creator import ProposalCreator
 from rpn.proposal_target_creator import ProposalTargetCreator
-from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
@@ -31,7 +25,6 @@ class FasterRCNNTrainer:
         self.anchor_creator = self.faster_rcnn.anchor_creator
         self.proposal_creator = self.faster_rcnn.proposal_creator
 
-
         self.proposal_target_creator = ProposalTargetCreator(config)
         self.rpn_loss  = RPNLoss(config,device)   
         self.fast_rcnn_loss = FastRCNNLoss(config,device)
@@ -40,6 +33,7 @@ class FasterRCNNTrainer:
         self.optimizer = optim.SGD(params=params,lr=float(config.FASTER_RCNN.TRAIN.LEARNING_RATE),
                                     momentum=float(config.FASTER_RCNN.TRAIN.MOMENTUM),
                                     weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
+        
 
     def train(self):
         steps = 0 
@@ -114,8 +108,6 @@ class FasterRCNNTrainer:
                     total_loss.backward()
                     self.optimizer.step()
 
-                steps += 1
-
                 if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
                     self.writer.add_scalar('rpn/reg_loss',total_rpn_reg_loss.item(),steps)
@@ -125,11 +117,18 @@ class FasterRCNNTrainer:
                     self.writer.add_histogram('rpn/conv1',self.rpn.conv1.conv.weight,steps)
                     self.writer.add_histogram('roi/fc7',self.fast_rcnn.fc7.fc.weight,steps)
 
-                    img_and_gt_bboxes = draw_img_bboxes_labels(images_batch,bboxes_batch,labels_batch)
-                    self.writer.add_images('gt_boxes',img_and_gt_bboxes)
+                    label_names = [ self.dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
 
-                    predicted_labels, predicted_scores,predicted_bboxes, = self.faster_rcnn(images_batch)
-                    img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch,predicted_bboxes,predicted_labels)
-                    self.writer.add_images('predicted_boxes',img_and_predicted_bboxes)
+                    img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],bboxes_batch[0],label_names)
+                    self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
+
+                    predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch, = self.faster_rcnn(images_batch.float())
+            
+                    label_names = [ self.dataloader.dataset.get_label_names()[label_index] for label_index in predicted_labels_batch[0]] 
+
+                    if len(predicted_labels_batch[0])>0:
+                        img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],predicted_bboxes_batch[0],label_names)
+                        self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
 
+                steps += 1

@@ -42,6 +42,9 @@ class VOCDataset(data.Dataset):
                 self.ids.append(line.strip())
 
         self.label_names = VOCDataset.VOC_BBOX_LABEL_NAMES
+    
+    def get_label_names(self):
+        return self.label_names
 
     def __len__(self):
         return len(self.ids)

@@ -1,8 +1,6 @@
 import os
 import sys
 
-
-
 current_dir= os.path.dirname(os.path.realpath(__file__))
 work_folder=current_dir[:current_dir.find('test')]
 sys.path.append(work_folder+'src/algorithm')
@@ -50,7 +48,7 @@ ROI_SIZE = 7
 config_path = work_folder+'src/config/experiments/exp01_config.yaml'
 config = combine_configs(config_path)
 
-unittest.skip("passed")
+@unittest.skip("passed")
 class TestConfig(unittest.TestCase):
     def test_get_default_config(self) -> None:        
         print(config)
@@ -285,7 +283,7 @@ class TestFasterRCNN(unittest.TestCase):
     def test_forward(self):
         bboxes,labels,scores = self.faster_rcnn(IMG)
 
-@unittest.skip('passed')    
+unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)

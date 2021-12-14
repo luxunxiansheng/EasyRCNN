@@ -65,8 +65,7 @@ class FasterRCNN(nn.Module):
         for label_index in range(1, self.n_class+1):
             cls_bbox_for_label_index = predicted_roi_bboxes.reshape((-1, self.n_class+1, 4))[:, label_index, :]
             prob_for_label_index = predicted_prob[:, label_index]
-            print(prob_for_label_index)
-
+            
             mask = prob_for_label_index > self.config.FASTER_RCNN.EVALUATE_SCORE_THRESHOLD
             cls_bbox_for_label_index = cls_bbox_for_label_index[mask]
             prob_for_label_index = prob_for_label_index[mask]

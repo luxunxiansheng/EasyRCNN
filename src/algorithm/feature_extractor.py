@@ -34,7 +34,6 @@ class VGG16FeatureExtractor(nn.Module):
 
     def forward(self, im_data):
         assert im_data.size(1) == self.img_channels
-
         x = self.conv1(im_data)
         x = self.conv2(x)
         x = self.conv3(x)
