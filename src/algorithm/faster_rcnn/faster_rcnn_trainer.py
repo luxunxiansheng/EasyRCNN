@@ -14,8 +14,6 @@ from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 
-
-
 class FasterRCNNTrainer:
     def __init__(self,config,dataset,writer,device) -> None:
         self.config = config
@@ -29,7 +27,7 @@ class FasterRCNNTrainer:
         #self.writer.add_graph(self.feature_extractor)
 
         self.rpn = RPN(config).to(device)
-        #self.writer.add_graph(self.rpn)
+        self.writer.add_graph(self.rpn)
 
         self.fast_rcnn = FastRCNN(config).to(device)
         #self.writer.add_graph(self.fast_rcnn)

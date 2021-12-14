@@ -8,13 +8,15 @@ class FastRCNN(nn.Module):
     def __init__(self, config):
         super().__init__()
     
+        self.n_classes = config.FAST_RCNN.NUM_CLASSES
+
         self.roi_pool = RoIPool((config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.ROI_SIZE),config.FAST_RCNN.SPATIAL_SCALE)
 
         self.fc6 = FCBlock(config.FAST_RCNN.IN_CHANNELS*config.FAST_RCNN.ROI_SIZE*config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.FC7_CHANNELS)
         self.fc7 = FCBlock(config.FAST_RCNN.FC7_CHANNELS, config.FAST_RCNN.FC7_CHANNELS)
         
-        self.loc = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,  (config.FAST_RCNN.NUM_CLASSES+1) * 4)
-        self.score = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,config.FAST_RCNN.NUM_CLASSES+1)
+        self.loc = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,  (self.n_classes+1) * 4)
+        self.score = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,self.n_classes+1)
 
         weights_normal_init(self.loc, 0.001)
         weights_normal_init(self.score,0.01)

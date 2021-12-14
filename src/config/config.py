@@ -1,7 +1,7 @@
 """
 Default configurations for Faster R-CNN.
 """
-
+import os
 
 from yacs.config import CfgNode as ConfigNode
 
@@ -15,7 +15,6 @@ _C.TEST.TEMP_DIR = '/media/yan/D/ornot/workspace/object_detection/test/temp'
 # ----------------------- CHECKPOINT-----------------------------------------------#
 _C.CHECKPOINT = ConfigNode()
 _C.CHECKPOINT.CHECKPOINT_DIR = '/media/yan/D/ornot/workspace/object_detection/checkpoint'
-
 
 # ----------------------- DATASET ------------------------------------------------- #
 _C.VOC_DATASET = ConfigNode()
@@ -85,7 +84,8 @@ _C.FAST_RCNN.ROI_SIGMMA = 1.0
 # ----------------------- FASTER_RCNN------------------------------------------------------#
 _C.FASTER_RCNN = ConfigNode()
 _C.FASTER_RCNN.FEATRUE_EXTRACTOR = 'vgg16'
-
+_C.FASTER_RCNN.EVALUATE_NMS_THRESHOLD = 0.3
+_C.FASTER_RCNN.EVALUATE_SCORE_THRESHOLD = 0.05
 #-------------------------FASTER_RCNN.TRAIN-------------------------------------------------#
 _C.FASTER_RCNN.TRAIN = ConfigNode()
 _C.FASTER_RCNN.TRAIN.BATCH_SIZE = 1
@@ -100,10 +100,6 @@ _C.FASTER_RCNN.TRAIN.PRETRAINED_MODEL_PATH = None
 _C.FASTER_RCNN.TRAIN.CHECK_FREQUENCY = 100
 
 
-
-
-
-
 def get_default_config():
     """
     Get the default config.
@@ -115,9 +111,7 @@ def combine_configs(cfg_path):
     cfg = get_default_config()    
 
     # Priority 2: merge from yaml config
-    if cfg_path is not None and cfg_path.exists():
+    if cfg_path is not None and os.path.exists(cfg_path):
         cfg.merge_from_file(cfg_path)
-    
-    
 
     return cfg

@@ -1,6 +1,8 @@
 import os
 import sys
 
+
+
 current_dir= os.path.dirname(os.path.realpath(__file__))
 work_folder=current_dir[:current_dir.find('test')]
 sys.path.append(work_folder+'src/algorithm')
@@ -11,7 +13,7 @@ sys.path.append(work_folder+'src/tool')
 import unittest
 
 import torch
-from config import get_default_config
+from config import combine_configs
 from voc_dataset import VOCDataset
 from feature_extractor import FeatureExtractorFactory, VGG16FeatureExtractor
 from rpn.anchor_creator import AnchorCreator
@@ -24,6 +26,7 @@ from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from rpn.region_proposal_network_trainer import RPNTrainer
 from fast_rcnn.fast_rcnn_network import FastRCNN
 from faster_rcnn.faster_rcnn_trainer import FasterRCNNTrainer
+from faster_rcnn.faster_rcnn_network import FasterRCNN
 
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
@@ -44,8 +47,8 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-
-config = get_default_config()
+config_path = work_folder+'src/config/experiments/exp01_config.yaml'
+config = combine_configs(config_path)
 
 @unittest.skip("passed")
 class TestConfig(unittest.TestCase):
@@ -274,7 +277,14 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')    
+class TestFasterRCNN(unittest.TestCase):
+    def setUp(self) -> None:
+        self.faster_rcnn = FasterRCNN(config)
+
+    def test_forward(self):
+        bboxes,labels,scores = self.faster_rcnn(IMG)
+
+@unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
