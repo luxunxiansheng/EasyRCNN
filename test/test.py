@@ -50,7 +50,7 @@ ROI_SIZE = 7
 config_path = work_folder+'src/config/experiments/exp01_config.yaml'
 config = combine_configs(config_path)
 
-@unittest.skip("passed")
+unittest.skip("passed")
 class TestConfig(unittest.TestCase):
     def test_get_default_config(self) -> None:        
         print(config)
@@ -277,6 +277,7 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
+@unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.faster_rcnn = FasterRCNN(config)

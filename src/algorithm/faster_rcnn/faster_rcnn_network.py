@@ -12,14 +12,16 @@ from rpn.region_proposal_network import RPN
 from utility import Utility
 
 class FasterRCNN(nn.Module):
-    def __init__(self,config,):
+    def __init__(self,config,writer,device='cpu'):
         super().__init__()
         self.config = config
-        self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.FASTER_RCNN.FEATRUE_EXTRACTOR)
-        self.rpn = RPN(config)
-        self.fast_rcnn = FastRCNN(config)
+        self.writer = writer
+        self.device = device
+        self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.FASTER_RCNN.FEATRUE_EXTRACTOR).to(device)
+        self.rpn = RPN(config).to(device)
+        self.fast_rcnn = FastRCNN(config).to(device)
         self.n_class = self.fast_rcnn.n_classes
-        self.anchor_creator = AnchorCreator(config)
+        self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)
         
     def forward(self,image_batch):
@@ -39,7 +41,7 @@ class FasterRCNN(nn.Module):
 
             anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
             proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,rpn_predicted_scores,rpn_predicted_locs,img_height,img_width,feature_height,feature_width)
-            proposed_roi_bbox_indices = torch.zeros(len(proposed_roi_bboxes))
+            proposed_roi_bbox_indices = torch.zeros(len(proposed_roi_bboxes),device=self.device)
             predicted_roi_score,predicted_roi_loc= self.fast_rcnn(feature,proposed_roi_bboxes,proposed_roi_bbox_indices)
             predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)
             
@@ -61,16 +63,19 @@ class FasterRCNN(nn.Module):
         labels = list()
         scores = list()
         for label_index in range(1, self.n_class+1):
-            cls_bbox_with_label_index = predicted_roi_bboxes.reshape((-1, self.n_class+1, 4))[:, label_index, :]
-            prob_with_label_index = predicted_prob[:, label_index]
-            mask = prob_with_label_index > self.config.FASTER_RCNN.EVALUATE_SCORE_THRESHOLD
-            cls_bbox_with_label_index = cls_bbox_with_label_index[mask]
-            prob_with_label_index = prob_with_label_index[mask]
-            keep = boxes.nms(cls_bbox_with_label_index, prob_with_label_index,self.config.FASTER_RCNN.EVALUATE_NMS_THRESHOLD)
-            bboxes.append(cls_bbox_with_label_index[keep])
+            cls_bbox_for_label_index = predicted_roi_bboxes.reshape((-1, self.n_class+1, 4))[:, label_index, :]
+            prob_for_label_index = predicted_prob[:, label_index]
+            print(prob_for_label_index)
+
+            mask = prob_for_label_index > self.config.FASTER_RCNN.EVALUATE_SCORE_THRESHOLD
+            cls_bbox_for_label_index = cls_bbox_for_label_index[mask]
+            prob_for_label_index = prob_for_label_index[mask]
+            keep = boxes.nms(cls_bbox_for_label_index, prob_for_label_index,self.config.FASTER_RCNN.EVALUATE_NMS_THRESHOLD)
+            
+            bboxes.append(cls_bbox_for_label_index[keep])
             labels.append((label_index-1) * torch.ones((len(keep),)))
-            scores.append(prob_with_label_index[keep])
-        bboxes = torch.concat(bboxes, dim=0).to(float)
-        labels = torch.concat(labels,dim=0).to(int)
-        scores = torch.concat(scores,dim=0).to(float)
-        return bboxes, labels, scores
+            scores.append(prob_for_label_index[keep])
+        bboxes = torch.tensor(torch.concat(bboxes, dim=0),dtype=torch.float32,device=self.device)
+        labels = torch.tensor(torch.concat(labels,dim=0), dtype=torch.long,device=self.device)
+        scores = torch.tensor(torch.concat(scores,dim=0), dtype=torch.float32,device=self.device)
+        return labels, scores, bboxes  
