@@ -20,7 +20,7 @@ class FasterRCNN(nn.Module):
         self.device = device
         self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.FASTER_RCNN.FEATRUE_EXTRACTOR).to(device)
         self.rpn = RPN(config).to(device)
-        self.fast_rcnn = FastRCNN(config,device=device)
+        self.fast_rcnn = FastRCNN(config).to(device)
         self.n_class = self.fast_rcnn.n_classes
         self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)

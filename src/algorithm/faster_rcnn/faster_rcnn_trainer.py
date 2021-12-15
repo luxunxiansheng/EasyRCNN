@@ -10,6 +10,8 @@ from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
 
+import GPUtil
+
 class FasterRCNNTrainer:
     def __init__(self,config,dataset,writer,device) -> None:
         self.config = config
@@ -108,6 +110,8 @@ class FasterRCNNTrainer:
                     total_loss.backward()
                     self.optimizer.step()
 
+                    
+
                 if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
                     self.writer.add_scalar('rpn/reg_loss',total_rpn_reg_loss.item(),steps)
@@ -117,26 +121,25 @@ class FasterRCNNTrainer:
                     self.writer.add_histogram('rpn/conv1',self.rpn.conv1.conv.weight,steps)
                     self.writer.add_histogram('roi/fc7',self.fast_rcnn.fc7.fc.weight,steps)
 
-                    label_names = [ self.dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
-                    img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],bboxes_batch[0],label_names)
-                    self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
                     
                     
+                    with torch.no_grad():
+                        predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
+                        predicted_labels_for_img_0 = predicted_labels_batch[0]
                     
+                        predicted_label_names_for_img_0 = []
+                        for label_index in predicted_labels_for_img_0:
+                            predicted_label_names_for_img_0.append(self.dataloader.dataset.get_label_names()[label_index.long().item()])
 
+                        predicted_bboxes_for_img_0 = predicted_bboxes_batch[0]
 
-                    predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
-                    predicted_labels_for_img_0 = predicted_labels_batch[0]
-                    
-                    predicted_label_names_for_img_0 = []
-                    for label_index in predicted_labels_for_img_0:
-                        predicted_label_names_for_img_0.append(self.dataloader.dataset.get_label_names()[label_index.long().item()])
+                        if len(predicted_label_names_for_img_0) >0:
+                            label_names = [self.dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
+                            img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],bboxes_batch[0],label_names)
+                            self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
 
-                    predicted_bboxes_for_img_0 = predicted_bboxes_batch[0]
-
-                    if len(predicted_label_names_for_img_0) >0:
-                        img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],predicted_bboxes_for_img_0[:6],predicted_label_names_for_img_0[:6])
-                        self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
-
-
+                            img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],predicted_bboxes_for_img_0,predicted_label_names_for_img_0)
+                            self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
+                        
+                GPUtil.showUtilization()    
                 steps += 1

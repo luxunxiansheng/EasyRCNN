@@ -7,8 +7,6 @@ from common import FCBlock, weights_normal_init
 class FastRCNN(nn.Module):
     def __init__(self, config,device='cpu'):
         super().__init__()
-
-        self.device = device
     
         self.n_classes = config.FAST_RCNN.NUM_CLASSES
 
@@ -24,7 +22,7 @@ class FastRCNN(nn.Module):
         weights_normal_init(self.score,0.01)
 
     def forward(self,feature,rois):
-        roi_indices = torch.zeros(len(rois),device=self.device)
+        roi_indices = torch.zeros(len(rois),device=feature.device)
         indices_and_rois = torch.cat([roi_indices[:, None], rois], dim=1)
         indices_and_rois = indices_and_rois[:, [0, 2, 1, 4, 3]]
         indices_and_rois = indices_and_rois.contiguous()
