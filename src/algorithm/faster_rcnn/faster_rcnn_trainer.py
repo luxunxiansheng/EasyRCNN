@@ -9,6 +9,7 @@ from rpn.proposal_target_creator import ProposalTargetCreator
 from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
+from checkpoint_tool import load_checkpoint, save_checkpoint
 
 import GPUtil
 
@@ -36,12 +37,25 @@ class FasterRCNNTrainer:
                                     momentum=float(config.FASTER_RCNN.TRAIN.MOMENTUM),
                                     weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
         
+        self.resume = config.FASTER_RCNN.TRAIN.RESUME
+        self.checkpoint_dir = config.CHECKPOINT.CHECKPOINT_DIR
 
     def train(self):
         steps = 0 
-        total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
+        start_epoch= 0
 
-        for epcho in tqdm(range(self.epoches)):
+
+        if self.resume:
+            ckpt = load_checkpoint(self.checkpoint_dir) # custom method for loading last checkpoint
+            self.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
+            self.rpn.load_state_dict(ckpt['rpn_model'])
+            self.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model'])
+            self.optimizer.load_state_dict(ckpt['optimizer'])
+            start_epoch = ckpt['epoch']
+            steps = ckpt['steps']
+
+        total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
+        for epoch in tqdm(range(start_epoch,self.epoches)):
             for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.dataloader)):
 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
@@ -110,8 +124,6 @@ class FasterRCNNTrainer:
                     total_loss.backward()
                     self.optimizer.step()
 
-                    
-
                 if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
                     self.writer.add_scalar('rpn/reg_loss',total_rpn_reg_loss.item(),steps)
@@ -121,8 +133,6 @@ class FasterRCNNTrainer:
                     self.writer.add_histogram('rpn/conv1',self.rpn.conv1.conv.weight,steps)
                     self.writer.add_histogram('roi/fc7',self.fast_rcnn.fc7.fc.weight,steps)
 
-                    
-                    
                     with torch.no_grad():
                         predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
                         predicted_labels_for_img_0 = predicted_labels_batch[0]
@@ -131,15 +141,38 @@ class FasterRCNNTrainer:
                         for label_index in predicted_labels_for_img_0:
                             predicted_label_names_for_img_0.append(self.dataloader.dataset.get_label_names()[label_index.long().item()])
 
-                        predicted_bboxes_for_img_0 = predicted_bboxes_batch[0]
-
                         if len(predicted_label_names_for_img_0) >0:
                             label_names = [self.dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
-                            img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],bboxes_batch[0],label_names)
-                            self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
+                            img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],
+                                                                        bboxes_batch[0],
+                                                                        label_names, 
+                                                                        resize_shape=[img_height,img_width],
+                                                                        color='green')
 
-                            img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],predicted_bboxes_for_img_0,predicted_label_names_for_img_0)
+                            self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
+                            print(bboxes_batch[0])
+
+                            predicted_bboxes_for_img_0 = predicted_bboxes_batch[0]
+                            print(predicted_bboxes_for_img_0)
+
+                            img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],
+                                                                            predicted_bboxes_for_img_0,
+                                                                            predicted_label_names_for_img_0,
+                                                                            resize_shape=[img_height,img_width],
+                                                                            color='red')
+
                             self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
-                        
-                GPUtil.showUtilization()    
+                
+                    # save checkpoint if needed
+                    cpkt = {
+                            'feature_extractor_model':self.feature_extractor.state_dict(),
+                            'rpn_model': self.rpn.state_dict(),
+                            'fast_rcnn_model': self.fast_rcnn.state_dict(),
+                            'epoch': epoch,
+                            'steps': steps,
+                            'optimizer': self.optimizer.state_dict()
+                            }
+                    
+                    save_checkpoint(cpkt, 'model_checkpoint.ckpt')
+
                 steps += 1
