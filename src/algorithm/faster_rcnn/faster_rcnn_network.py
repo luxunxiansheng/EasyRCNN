@@ -97,7 +97,7 @@ class FasterRCNN(nn.Module):
             # keep top-K bboxes only if there is at least one bbox left for current class
             if keep.shape[0] > 0:
                 bboxes.append(cls_bbox_for_label_index[keep])
-                labels.append((label_index-1) * torch.ones((len(keep),)))
+                labels.append((label_index) * torch.ones((len(keep),)))
                 scores.append(prob_for_label_index[keep])
         
         #  concatenate all bboxes and scores only if there is at least one bbox left for 

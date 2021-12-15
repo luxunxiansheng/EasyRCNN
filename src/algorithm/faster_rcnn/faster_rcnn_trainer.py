@@ -44,7 +44,6 @@ class FasterRCNNTrainer:
         steps = 0 
         start_epoch= 0
 
-
         if self.resume:
             ckpt = load_checkpoint(self.checkpoint_dir) # custom method for loading last checkpoint
             self.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
