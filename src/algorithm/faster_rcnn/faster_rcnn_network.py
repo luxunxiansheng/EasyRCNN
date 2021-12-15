@@ -49,25 +49,37 @@ class FasterRCNN(nn.Module):
                                                                 feature_height,
                                                                 feature_width)
 
-            proposed_roi_bbox_indices = torch.zeros(len(proposed_roi_bboxes),device=self.device)
-            predicted_roi_score,predicted_roi_loc= self.fast_rcnn(feature,proposed_roi_bboxes,proposed_roi_bbox_indices)
-            predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)
             
-            predicted_roi_bboxes[:,0::2] =(predicted_roi_bboxes[:,0::2]).clamp(min=0,max=img_height)
-            predicted_roi_bboxes[:,1::2] =(predicted_roi_bboxes[:,1::2]).clamp(min=0,max=img_width)
-
-            prob = F.softmax(predicted_roi_score,dim=1)
-
-            bboxes, labels, scores = self._suppress(predicted_roi_bboxes, prob)
+            bboxes, labels, scores = self.detect(  feature, 
+                                                    proposed_roi_bboxes, 
+                                                    img_height, 
+                                                    img_width,
+                                                    self.config.FASTER_RCNN.VISUAL_SCORE_THRESHOLD,
+                                                    self.config.FASTER_RCNN.VISUAL_NMS_THRESHOLD)
             
             bboxes_batch.append(bboxes)
             labels_batch.append(labels)
             scores_batch.append(scores)
             
-            
         return bboxes_batch,labels_batch,scores_batch
 
-    def _suppress(self, predicted_roi_bboxes, predicted_prob):
+    def detect(self, feature, proposed_roi_bboxes,img_height,img_width,score_threshold=0.05,nms_threshold=0.3):
+        predicted_roi_score,predicted_roi_loc= self.fast_rcnn(feature,proposed_roi_bboxes)
+        predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)
+            
+        predicted_roi_bboxes[:,0::2] =(predicted_roi_bboxes[:,0::2]).clamp(min=0,max=img_height)
+        predicted_roi_bboxes[:,1::2] =(predicted_roi_bboxes[:,1::2]).clamp(min=0,max=img_width)
+
+        prob = F.softmax(predicted_roi_score,dim=1)
+
+        bboxes, labels, scores = self._suppress(predicted_roi_bboxes, 
+                                                    prob,
+                                                    score_threshold,
+                                                    nms_threshold)
+                                                
+        return bboxes,labels,scores
+
+    def _suppress(self, predicted_roi_bboxes, predicted_prob,score_threshold,nms_threshold):
         bboxes = list()
         labels = list()
         scores = list()
@@ -77,10 +89,10 @@ class FasterRCNN(nn.Module):
             prob_for_label_index = predicted_prob[:, label_index]
             
             # for current class, keep the top-K bboxes with highest scores
-            mask = prob_for_label_index > self.config.FASTER_RCNN.VISUAL_SCORE_THRESHOLD
+            mask = prob_for_label_index > score_threshold
             cls_bbox_for_label_index = cls_bbox_for_label_index[mask]
             prob_for_label_index = prob_for_label_index[mask]
-            keep = boxes.nms(cls_bbox_for_label_index, prob_for_label_index,self.config.FASTER_RCNN.VISUAL_NMS_THRESHOLD)
+            keep = boxes.nms(cls_bbox_for_label_index, prob_for_label_index,nms_threshold)
             
             # keep top-K bboxes only if there is at least one bbox left for current class
             if keep.shape[0] > 0:

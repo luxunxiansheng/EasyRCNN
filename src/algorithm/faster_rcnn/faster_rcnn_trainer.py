@@ -123,7 +123,6 @@ class FasterRCNNTrainer:
                     self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
             
                     predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
-
                     predicted_labels_for_img_0 = predicted_labels_batch[0]
                     
                     predicted_label_names_for_img_0 = []
