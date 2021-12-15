@@ -121,13 +121,19 @@ class FasterRCNNTrainer:
 
                     img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],bboxes_batch[0],label_names)
                     self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
-
-                    predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch, = self.faster_rcnn(images_batch.float())
             
-                    label_names = [ self.dataloader.dataset.get_label_names()[label_index] for label_index in predicted_labels_batch[0]] 
+                    predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
 
-                    if len(predicted_labels_batch[0])>0:
-                        img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],predicted_bboxes_batch[0],label_names)
+                    predicted_labels_for_img_0 = predicted_labels_batch[0]
+                    
+                    predicted_label_names_for_img_0 = []
+                    for label_index in predicted_labels_for_img_0:
+                        predicted_label_names_for_img_0.append(self.dataloader.dataset.get_label_names()[label_index.long().item()])
+
+                    predicted_bboxes_for_img_0 = predicted_bboxes_batch[0]
+
+                    if len(predicted_label_names_for_img_0) >0:
+                        img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],predicted_bboxes_for_img_0[:6],predicted_label_names_for_img_0[:6])
                         self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
 
