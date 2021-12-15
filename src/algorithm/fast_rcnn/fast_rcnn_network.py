@@ -5,7 +5,7 @@ from torchvision.ops import RoIPool
 from common import FCBlock, weights_normal_init
 
 class FastRCNN(nn.Module):
-    def __init__(self, config,device = 'cpu'):
+    def __init__(self, config,device='cpu'):
         super().__init__()
 
         self.device = device

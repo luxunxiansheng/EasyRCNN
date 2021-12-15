@@ -92,8 +92,8 @@ class FasterRCNNTrainer:
                                                                                                 img_height,
                                                                                                 img_width)
 
-                    sampled_roi_bbox_indices = torch.zeros(len(sampled_roi),device=self.device)
-                    predicted_roi_cls_score,predicted_roi_loc = self.fast_rcnn(feature,sampled_roi,sampled_roi_bbox_indices)
+                    
+                    predicted_roi_cls_score,predicted_roi_loc = self.fast_rcnn(feature,sampled_roi)
                     roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss(predicted_roi_cls_score,
                                                                     predicted_roi_loc,
                                                                     gt_roi_label,
@@ -118,10 +118,13 @@ class FasterRCNNTrainer:
                     self.writer.add_histogram('roi/fc7',self.fast_rcnn.fc7.fc.weight,steps)
 
                     label_names = [ self.dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
-
                     img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],bboxes_batch[0],label_names)
                     self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
-            
+                    
+                    
+                    
+
+
                     predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
                     predicted_labels_for_img_0 = predicted_labels_batch[0]
                     

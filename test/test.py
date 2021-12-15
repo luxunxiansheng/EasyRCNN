@@ -265,8 +265,8 @@ class TestFastRCNN(unittest.TestCase):
         print('GT ROI LOC Size:{}'.format(gt_roi_loc.shape))
         print('GT ROI LABEL Size:{}'.format(gt_roi_label.shape))
 
-        sampled_roi_bbox_indices = torch.zeros(len(sampled_roi))
-        predicted_roi_cls_score,predicted_roi_cls_loc = self.fast_rcnn(feature[0],sampled_roi,sampled_roi_bbox_indices)
+        
+        predicted_roi_cls_score,predicted_roi_cls_loc = self.fast_rcnn(feature[0],sampled_roi)
 
         print('Predicted ROI CLS LOC Size:{}'.format(predicted_roi_cls_loc.shape))
         print('Predicted ROI CLS SCORE Size:{}'.format(predicted_roi_cls_score.shape))
