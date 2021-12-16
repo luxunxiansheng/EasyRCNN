@@ -38,14 +38,14 @@ class FasterRCNNTrainer:
                                     weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
         
         self.resume = config.FASTER_RCNN.TRAIN.RESUME
-        self.checkpoint_dir = config.CHECKPOINT.CHECKPOINT_DIR
+        self.checkpoint_path = config.CHECKPOINT.CHECKPOINT_PATH
 
     def train(self):
         steps = 0 
         start_epoch= 0
 
         if self.resume:
-            ckpt = load_checkpoint(self.checkpoint_dir) # custom method for loading last checkpoint
+            ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
             self.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
             self.rpn.load_state_dict(ckpt['rpn_model'])
             self.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model'])
@@ -146,7 +146,7 @@ class FasterRCNNTrainer:
                                                                         bboxes_batch[0],
                                                                         label_names, 
                                                                         resize_shape=[img_height,img_width],
-                                                                        color='green')
+                                                                        colors='green')
 
                             self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
                             print(bboxes_batch[0])
@@ -158,7 +158,7 @@ class FasterRCNNTrainer:
                                                                             predicted_bboxes_for_img_0,
                                                                             predicted_label_names_for_img_0,
                                                                             resize_shape=[img_height,img_width],
-                                                                            color='red')
+                                                                            colors='red')
 
                             self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
                 
@@ -172,6 +172,6 @@ class FasterRCNNTrainer:
                             'optimizer': self.optimizer.state_dict()
                             }
                     
-                    save_checkpoint(cpkt, 'model_checkpoint.ckpt')
+                    save_checkpoint(cpkt, self.checkpoint_path)
 
                 steps += 1

@@ -3,7 +3,7 @@ from torchvision import transforms
 from torchvision.utils import draw_bounding_boxes
     
 
-def draw_img_bboxes_labels(image, bboxes, labels,resize_shape=[800,800],color='red'):
+def draw_img_bboxes_labels(image, bboxes, labels,resize_shape=[800,800],colors='red'):
     colors = ["red", "green", "blue", "yellow","black","white","purple","orange","pink","brown","gray","cyan","magenta"]
 
     bboxes = torch.index_select(bboxes.cpu(),1,torch.tensor([1,0,3,2]))
