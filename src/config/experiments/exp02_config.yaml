@@ -1,0 +1,21 @@
+FASTER_RCNN:
+  FEATRUE_EXTRACTOR: vgg16
+  EVALUATE_NMS_THRESHOLD: 0.3
+  EVALUATE_SCORE_THRESHOLD: 0.03
+  VISUAL_NMS_THRESHOLD: 0.3
+  VISUAL_SCORE_THRESHOLD: 0.7
+
+  TRAIN:
+    CHECK_FREQUENCY: 500
+    EPOCHS: 500
+    NUM_WORKERS: 2
+    PRETRAINED_MODEL_PATH: None
+    RESUME: True
+
+CHECKPOINT:
+  CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp02/model_checkpoint.ckpt'
+
+LOG:
+  LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp02'
+
+

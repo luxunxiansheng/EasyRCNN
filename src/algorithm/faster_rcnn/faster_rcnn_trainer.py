@@ -10,7 +10,7 @@ from rpn.proposal_target_creator import ProposalTargetCreator
 from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
-from checkpoint_tool import load_checkpoint, save_checkpoint
+from checkpoint_tool import  load_checkpoint, save_checkpoint
 
 
 class FasterRCNNTrainer:
@@ -108,7 +108,6 @@ class FasterRCNNTrainer:
                                                                                                 gt_labels,
                                                                                                 img_height,
                                                                                                 img_width)
-
                     
                     predicted_roi_cls_score,predicted_roi_loc = self.fast_rcnn(feature,sampled_roi)
                     roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss(predicted_roi_cls_score,
@@ -136,8 +135,8 @@ class FasterRCNNTrainer:
 
                     with torch.no_grad():
                         predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
+                        
                         predicted_labels_for_img_0 = predicted_labels_batch[0]
-                    
                         predicted_label_names_for_img_0 = []
                         for label_index in predicted_labels_for_img_0:
                             predicted_label_names_for_img_0.append(self.dataloader.dataset.get_label_names()[label_index.long().item()])
@@ -151,13 +150,9 @@ class FasterRCNNTrainer:
                                                                         colors='green')
 
                             self.writer.add_images('gt_boxes',img_and_gt_bboxes.unsqueeze(0),steps)
-                            print(bboxes_batch[0])
-
+                            
                             predicted_bboxes_for_img_0 = predicted_bboxes_batch[0]
-                            print(predicted_bboxes_for_img_0)
-
-
-
+                            
                             img_and_predicted_bboxes = draw_img_bboxes_labels(images_batch[0],
                                                                             predicted_bboxes_for_img_0,
                                                                             predicted_label_names_for_img_0,
@@ -166,7 +161,8 @@ class FasterRCNNTrainer:
 
                             self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
-                            self._evaluate(gt_bboxes, gt_labels, predicted_scores_batch, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                            predicted_scores_for_img_0 = predicted_scores_batch[0]
+                            self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
                 
                     # save checkpoint if needed
                     cpkt = {
@@ -182,18 +178,21 @@ class FasterRCNNTrainer:
 
                 steps += 1
 
-    def _evaluate(self, gt_bboxes, gt_labels, predicted_scores_batch, predicted_labels_for_img_0, predicted_bboxes_for_img_0):
+    def _evaluate(self, gt_bboxes, gt_labels, predicted_scores, predicted_labels, predicted_bboxes):
+        
+    
+                
         preds = [dict(
-                                # convert yxhw to xywh
-                                boxes = predicted_bboxes_for_img_0.index_select(0,torch.tensor[1,0,3,2]),
-                                scores = predicted_scores_batch[0],
-                                labels = predicted_labels_for_img_0,
-                            )]
-
+                    # convert yxhw to xywh
+                    boxes = predicted_bboxes.index_select(0,torch.tensor([1,0,3,2],device=predicted_bboxes.device)),
+                    scores = predicted_scores,
+                    labels = predicted_labels.long(),
+                    )]
+        
         target = [dict(
-                                boxes = gt_bboxes.index_select(0,torch.tensor[1,0,3,2]),
-                                labels = gt_labels,
-                            )]
-
+                    boxes = gt_bboxes.index_select(1,torch.tensor([1,0,3,2],device=gt_bboxes.device)),
+                    labels = gt_labels,
+                    )]
+            
         self.metric.update(preds,target)
         print(self.metric.compute())

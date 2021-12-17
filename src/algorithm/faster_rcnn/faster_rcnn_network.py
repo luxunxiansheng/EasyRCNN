@@ -1,9 +1,9 @@
 import torch
 from torch import nn
-from torch._C import device
+
 
 from torch.nn import functional as F
-from torchvision.ops import boxes
+from torchvision.ops import nms
 
 from fast_rcnn.fast_rcnn_network import FastRCNN
 from feature_extractor import FeatureExtractorFactory
@@ -65,6 +65,8 @@ class FasterRCNN(nn.Module):
 
     def detect(self, feature, proposed_roi_bboxes,img_height,img_width,score_threshold=0.05,nms_threshold=0.3):
         predicted_roi_score,predicted_roi_loc= self.fast_rcnn(feature,proposed_roi_bboxes)
+        
+        # post processing 
         predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)
             
         predicted_roi_bboxes[:,0::2] =(predicted_roi_bboxes[:,0::2]).clamp(min=0,max=img_height)
@@ -84,21 +86,26 @@ class FasterRCNN(nn.Module):
         labels = list()
         scores = list()
 
-        for label_index in range(1, self.n_class+1):
-            cls_bbox_for_label_index = predicted_roi_bboxes.reshape((-1, self.n_class+1, 4))[:, label_index, :]
-            prob_for_label_index = predicted_prob[:, label_index]
+        for class_index in range(1, self.n_class+1):
+            cls_bbox = predicted_roi_bboxes.reshape((-1, self.n_class+1, 4))[:, class_index, :]
+            class_prob = predicted_prob[:, class_index]
             
             # for current class, keep the top-K bboxes with highest scores
-            mask = prob_for_label_index > score_threshold
-            cls_bbox_for_label_index = cls_bbox_for_label_index[mask]
-            prob_for_label_index = prob_for_label_index[mask]
-            keep = boxes.nms(cls_bbox_for_label_index, prob_for_label_index,nms_threshold)
+            mask = class_prob > score_threshold
+            cls_bbox = cls_bbox[mask]
+            class_prob = class_prob[mask]
+            
+            cls_bboxs_xyxy=cls_bbox.index_select(dim=1,
+                                                index=torch.tensor([1,0,3,2],
+                                                device=cls_bbox.device))
+
+            keep = nms(cls_bboxs_xyxy,class_prob,nms_threshold)
             
             # keep top-K bboxes only if there is at least one bbox left for current class
             if keep.shape[0] > 0:
-                bboxes.append(cls_bbox_for_label_index[keep])
-                labels.append((label_index) * torch.ones((len(keep),)))
-                scores.append(prob_for_label_index[keep])
+                bboxes.append(cls_bbox[keep])
+                labels.append((class_index) * torch.ones((len(keep),)))
+                scores.append(class_prob[keep])
         
         #  concatenate all bboxes and scores only if there is at least one bbox left for 
         #  any class, elsewise return empty tensors

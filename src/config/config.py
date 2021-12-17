@@ -12,6 +12,10 @@ _C = ConfigNode()
 _C.TEST = ConfigNode()
 _C.TEST.TEMP_DIR = '/media/yan/D/ornot/workspace/object_detection/test/temp'
 
+# ----------------------- LOG ----------------------------------------------------- #
+_C.LOG = ConfigNode()
+_C.LOG.LOG_DIR = '/media/yan/D/ornot/workspace/object_detection/log'
+
 # ----------------------- CHECKPOINT-----------------------------------------------#
 _C.CHECKPOINT = ConfigNode()
 _C.CHECKPOINT.CHECKPOINT_PATH = '/media/yan/D/ornot/workspace/object_detection/checkpoint/model_checkpoint.ckpt'

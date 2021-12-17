@@ -1,9 +1,7 @@
 import os
 import shutil
 
-
 import torch
-
 
 def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int = None):
     """Saves torch model to checkpoint file.

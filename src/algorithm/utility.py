@@ -20,17 +20,17 @@ class Utility:
         dh = loc[:, 2::4]
         dw = loc[:, 3::4]
     
-        centor_y = dy * src_height.unsqueeze(1) + src_centor_y.unsqueeze(1)
-        centor_x = dx * src_width.unsqueeze(1) + src_centor_x.unsqueeze(1)
+        dst_centor_y = dy * src_height.unsqueeze(1) + src_centor_y.unsqueeze(1)
+        dst_centor_x = dx * src_width.unsqueeze(1) + src_centor_x.unsqueeze(1)
 
-        w = torch.exp(dw) * src_width.unsqueeze(1)
-        h = torch.exp(dh) * src_height.unsqueeze(1)
+        dst_h = torch.exp(dh) * src_height.unsqueeze(1)
+        dst_w = torch.exp(dw) * src_width.unsqueeze(1)
         
         dst_bbox = torch.zeros(loc.shape, dtype=loc.dtype,device=loc.device)
-        dst_bbox[:, 0::4] = centor_y - 0.5 * h
-        dst_bbox[:, 1::4] = centor_x - 0.5 * w
-        dst_bbox[:, 2::4] = centor_y + 0.5 * h
-        dst_bbox[:, 3::4] = centor_x + 0.5 * w
+        dst_bbox[:, 0::4] = dst_centor_y - 0.5 * dst_h
+        dst_bbox[:, 1::4] = dst_centor_x - 0.5 * dst_w
+        dst_bbox[:, 2::4] = dst_centor_y + 0.5 * dst_h
+        dst_bbox[:, 3::4] = dst_centor_x + 0.5 * dst_w
         
         return dst_bbox
 

@@ -74,7 +74,15 @@ class ProposalCreator:
         proposed_objectness_scores = proposed_objectness_scores[order]
 
         # Apply nms (e.g. threshold = 0.7).
-        keep = nms(proposed_roi_bboxs,proposed_objectness_scores,self.nms_thresh)
+        
+        
+        
+        proposed_roi_bboxs_xyxy=proposed_roi_bboxs.index_select(dim=1,
+                                                                index=torch.tensor([1,0,3,2],
+                                                                device=proposed_roi_bboxs.device))
+
+        keep = nms(proposed_roi_bboxs_xyxy,proposed_objectness_scores,
+                    self.nms_thresh)
         
         # Take after_nms_topN (e.g. 300)
         if self.n_post_nms > 0:

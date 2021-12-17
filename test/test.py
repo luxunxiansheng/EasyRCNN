@@ -45,7 +45,7 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-config_path = work_folder+'src/config/experiments/exp01_config.yaml'
+config_path = work_folder+'src/config/experiments/exp02_config.yaml'
 config = combine_configs(config_path)
 
 @unittest.skip("passed")
@@ -170,7 +170,7 @@ class TestRPNLoss(unittest.TestCase):
 class TestVOCDataset(unittest.TestCase):
     def setUp(self) -> None:
         self.voc_dataset = VOCDataset(config)
-        self.writer = SummaryWriter(config.TEST.TEMP_DIR)
+        self.writer = SummaryWriter(config.LOG.LOG_DIR)
 
     def tearDown(self) -> None:
         self.writer.flush()
@@ -200,7 +200,7 @@ class TestVOCDataset(unittest.TestCase):
 class TestRPNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
-        self.writer = SummaryWriter(config.TEST.TEMP_DIR)
+        self.writer = SummaryWriter(config.LOG.LOG_DIR)
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.trainer = RPNTrainer(config,self.voc_dataset,writer=self.writer,device=device)
         
@@ -287,7 +287,7 @@ unittest.skip('passed')
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
-        self.writer = SummaryWriter(config.TEST.TEMP_DIR)
+        self.writer = SummaryWriter(config.LOG.LOG_DIR)
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.trainer = FasterRCNNTrainer(config,self.voc_dataset,writer=self.writer,device=device)
         
