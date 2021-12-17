@@ -6,11 +6,11 @@ FASTER_RCNN:
   VISUAL_SCORE_THRESHOLD: 0.7
 
   TRAIN:
-    CHECK_FREQUENCY: 500
+    CHECK_FREQUENCY: 200
     EPOCHS: 500
     NUM_WORKERS: 2
     PRETRAINED_MODEL_PATH: None
-    RESUME: True
+    RESUME: False
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp02/model_checkpoint.ckpt'

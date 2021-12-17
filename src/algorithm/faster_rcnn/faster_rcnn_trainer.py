@@ -162,7 +162,8 @@ class FasterRCNNTrainer:
                             self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
                             predicted_scores_for_img_0 = predicted_scores_batch[0]
-                            self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                            map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                            self.writer.add_scalar('map',map,steps)
                 
                     # save checkpoint if needed
                     cpkt = {
@@ -179,20 +180,20 @@ class FasterRCNNTrainer:
                 steps += 1
 
     def _evaluate(self, gt_bboxes, gt_labels, predicted_scores, predicted_labels, predicted_bboxes):
-        
-    
-                
         preds = [dict(
-                    # convert yxhw to xywh
-                    boxes = predicted_bboxes.index_select(0,torch.tensor([1,0,3,2],device=predicted_bboxes.device)),
+                    # convert yxyx to xyxy
+                    boxes = predicted_bboxes.index_select(1,torch.tensor([1,0,3,2],device=predicted_bboxes.device)),
                     scores = predicted_scores,
-                    labels = predicted_labels.long(),
+                    labels = predicted_labels,
                     )]
         
         target = [dict(
                     boxes = gt_bboxes.index_select(1,torch.tensor([1,0,3,2],device=gt_bboxes.device)),
                     labels = gt_labels,
-                    )]
-            
+                    )]  
+
         self.metric.update(preds,target)
-        print(self.metric.compute())
+        return self.metric.compute()['map'].item()
+        
+
+        

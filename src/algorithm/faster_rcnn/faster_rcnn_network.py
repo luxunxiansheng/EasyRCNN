@@ -104,7 +104,7 @@ class FasterRCNN(nn.Module):
             # keep top-K bboxes only if there is at least one bbox left for current class
             if keep.shape[0] > 0:
                 bboxes.append(cls_bbox[keep])
-                labels.append((class_index) * torch.ones((len(keep),)))
+                labels.append(((class_index) * torch.ones((len(keep),),dtype=torch.int32)).to(self.device))
                 scores.append(class_prob[keep])
         
         #  concatenate all bboxes and scores only if there is at least one bbox left for 
@@ -115,7 +115,7 @@ class FasterRCNN(nn.Module):
             scores = torch.cat(scores, dim=0).to(self.device)
         else:
             bboxes = torch.empty((0, 4),device=self.device)
-            labels = torch.empty((0,),device=self.device)
-            scores = torch.empty((0,),device=self.device)
+            labels = torch.empty((0,), device=self.device)
+            scores = torch.empty((0,), device=self.device)
 
         return labels, scores, bboxes  
