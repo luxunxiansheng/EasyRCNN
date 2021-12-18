@@ -35,3 +35,7 @@ class FastRCNN(nn.Module):
         roi_locs = self.loc(fc7)
 
         return roi_scores,roi_locs 
+    
+    def predict(self,feature,rois):
+        return  self.forward(feature,rois)
+    

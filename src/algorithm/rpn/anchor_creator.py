@@ -11,7 +11,7 @@ class AnchorCreator:
     def create(self,feature_height,feature_width):
         shift_y = torch.arange(0, feature_height * self.feature_stride,self.feature_stride,device=self.device)
         shift_x = torch.arange(0, feature_width * self.feature_stride, self.feature_stride,device=self.device)
-        shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='ij')
+        shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='xy')
         shift = torch.stack((shift_y.ravel(), shift_x.ravel(),shift_y.ravel(), shift_x.ravel()), dim=1)
 
         A = self.anchor_base.shape[0]

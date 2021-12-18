@@ -47,13 +47,7 @@ class FasterRCNNTrainer:
         start_epoch= 0
 
         if self.resume:
-            ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
-            self.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
-            self.rpn.load_state_dict(ckpt['rpn_model'])
-            self.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model'])
-            self.optimizer.load_state_dict(ckpt['optimizer'])
-            start_epoch = ckpt['epoch']
-            steps = ckpt['steps']
+            steps, start_epoch = self._resume()
 
         total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
         for epoch in tqdm(range(start_epoch,self.epoches)):
@@ -178,6 +172,16 @@ class FasterRCNNTrainer:
                     save_checkpoint(cpkt, self.checkpoint_path)
 
                 steps += 1
+
+    def _resume(self):
+        ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
+        self.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
+        self.rpn.load_state_dict(ckpt['rpn_model'])
+        self.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model'])
+        self.optimizer.load_state_dict(ckpt['optimizer'])
+        start_epoch = ckpt['epoch']
+        steps = ckpt['steps']
+        return steps,start_epoch
 
     def _evaluate(self, gt_bboxes, gt_labels, predicted_scores, predicted_labels, predicted_bboxes):
         preds = [dict(
