@@ -27,6 +27,9 @@ class FastRCNNLoss(nn.Module):
         regression_loss = regression_loss /((target_labels>0).sum().float())
 
         return classfication_loss,regression_loss
+
+    def compute(self,predicted_scores,predicted_locs,target_labels,target_locs):
+        return self.forward(self,predicted_scores,predicted_locs,target_labels,target_locs):
     
     def _soomth_l1_loss(self, predicted_locs, target_locs,sigma):
         sigma2 = sigma**2

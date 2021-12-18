@@ -6,9 +6,9 @@ class AnchorCreator:
         self.anchor_scales = torch.tensor(config.RPN.ANCHOR_CREATOR.ANCHOR_SCALES)
         self.feature_stride = config.RPN.ANCHOR_CREATOR.FEATURE_STRIDE
         self.device = device
-        self.anchor_base = self._generate_anchor_base()
+        self.anchor_base = self._create_anchor_base()
 
-    def generate(self,feature_height,feature_width):
+    def create(self,feature_height,feature_width):
         shift_y = torch.arange(0, feature_height * self.feature_stride,self.feature_stride,device=self.device)
         shift_x = torch.arange(0, feature_width * self.feature_stride, self.feature_stride,device=self.device)
         shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='ij')
@@ -20,7 +20,7 @@ class AnchorCreator:
         anchors = anchors.reshape([K * A, 4]).to(torch.float32)
         return anchors
 
-    def _generate_anchor_base(self):
+    def _create_anchor_base(self):
         """Generate anchor base windows by enumerating aspect ratio and scales."""
         ctr_y = self.feature_stride / 2.
         ctr_x = self.feature_stride / 2.

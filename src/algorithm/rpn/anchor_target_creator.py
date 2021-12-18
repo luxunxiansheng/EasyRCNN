@@ -11,7 +11,7 @@ class AnchorTargetCreator:
         self.pos_ratio =      config.RPN.ANCHOR_TARGET_CREATOR.POSITIVE_RATIO
         self.device =         device
 
-    def generate(self, anchors_of_image,gt_bboxs,img_H,img_W):
+    def create(self, anchors_of_image,gt_bboxs,img_H,img_W):
         """Generate the labels and the target regression values.
 
         Args:

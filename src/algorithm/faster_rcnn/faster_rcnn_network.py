@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-
 from torch.nn import functional as F
 from torchvision.ops import nms
 
@@ -26,8 +25,8 @@ class FasterRCNN(nn.Module):
         self.proposal_creator = ProposalCreator(config)
         
     def forward(self,image_batch):
-        feature_batch= self.feature_extractor(image_batch)
-        rpn_predicted_score_batch ,rpn_predicted_loc_batch = self.rpn(feature_batch)
+        feature_batch= self.feature_extractor.predict(image_batch)
+        rpn_predicted_score_batch ,rpn_predicted_loc_batch = self.rpn.predict(feature_batch)
         
         bboxes_batch = list()
         labels_batch = list()
@@ -40,8 +39,8 @@ class FasterRCNN(nn.Module):
             rpn_predicted_scores = rpn_predicted_score_batch[image_index]
             rpn_predicted_locs = rpn_predicted_loc_batch[image_index]
 
-            anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
-            proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,
+            anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
+            proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,
                                                                 rpn_predicted_scores,
                                                                 rpn_predicted_locs,
                                                                 img_height,
@@ -50,12 +49,12 @@ class FasterRCNN(nn.Module):
                                                                 feature_width)
 
             
-            bboxes, labels, scores = self.detect(  feature, 
-                                                    proposed_roi_bboxes, 
-                                                    img_height, 
-                                                    img_width,
-                                                    self.config.FASTER_RCNN.VISUAL_SCORE_THRESHOLD,
-                                                    self.config.FASTER_RCNN.VISUAL_NMS_THRESHOLD)
+            bboxes, labels, scores = self.detect(feature, 
+                                                proposed_roi_bboxes, 
+                                                img_height, 
+                                                img_width,
+                                                self.config.FASTER_RCNN.VISUAL_SCORE_THRESHOLD,
+                                                self.config.FASTER_RCNN.VISUAL_NMS_THRESHOLD)
             
             bboxes_batch.append(bboxes)
             labels_batch.append(labels)
@@ -64,7 +63,7 @@ class FasterRCNN(nn.Module):
         return bboxes_batch,labels_batch,scores_batch
 
     def detect(self, feature, proposed_roi_bboxes,img_height,img_width,score_threshold=0.05,nms_threshold=0.3):
-        predicted_roi_score,predicted_roi_loc= self.fast_rcnn(feature,proposed_roi_bboxes)
+        predicted_roi_score,predicted_roi_loc= self.fast_rcnn.predict(feature,proposed_roi_bboxes)
         
         # post processing 
         predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)

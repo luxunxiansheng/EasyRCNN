@@ -17,7 +17,7 @@ class RPNLoss(nn.Module):
 
     def forward(self,anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width):
         
-        target_labels,target_locs = self.anchor_target_creator.generate(anchors_of_img,target_bboxs,img_height,img_width)
+        target_labels,target_locs = self.anchor_target_creator.create(anchors_of_img,target_bboxs,img_height,img_width)
 
         if target_labels is None:
             return torch.tensor(0.0,device=self.device),torch.tensor(0.0,device=self.device)
@@ -49,6 +49,9 @@ class RPNLoss(nn.Module):
 
         return classification_loss,regression_loss
 
+    def compute(self,anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width):
+        return self.forward(anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width)
+    
     def _soomth_l1_loss(self, predicted_locs, target_locs,sigma):
         sigma2 = sigma**2
         diff = predicted_locs - target_locs

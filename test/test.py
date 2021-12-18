@@ -65,7 +65,7 @@ class TestAnchorCreator(unittest.TestCase):
     
     
     def test_anchor_creation(self):
-        anchors = self.achor_creator.generate(2,2)
+        anchors = self.achor_creator.create(2,2)
         print(anchors.shape)
         print(anchors)
 
@@ -92,17 +92,17 @@ class TestAnchorTargetCreator(unittest.TestCase):
         image = image.unsqueeze(0)
         feature = self.feature_extractor(image.float())
         feature_height,feature_width = feature.shape[2:]
-        anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
+        anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
         img_height,img_width = image.shape[2:]
-        target_labels,target_locs = self.anchor_target_creator.generate(anchors_of_img,bboxes,img_height,img_width)
+        target_labels,target_locs = self.anchor_target_creator.create(anchors_of_img,bboxes,img_height,img_width)
         self.assertEqual((target_labels==1).nonzero().squeeze().shape,torch.Size([128]))
                     
 
     def test_anchor_target_creator(self):
-        anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
+        anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         self.assertEqual(anchors_of_img.shape, torch.Size([FEATURE_WIDTH*FEATURE_HEIGHT*9, 4]))
         
-        lables,locs = self.anchor_target_creator.generate(anchors_of_img, BBOX,IMG_HEIGHT, IMG_WIDTH)
+        lables,locs = self.anchor_target_creator.create(anchors_of_img, BBOX,IMG_HEIGHT, IMG_WIDTH)
         
         if lables is not None:
             self.assertEqual(locs.shape, torch.Size([FEATURE_WIDTH*FEATURE_HEIGHT*9, 4]))
@@ -118,8 +118,8 @@ class TestProposalCreator(unittest.TestCase):
     
     def test_rpn(self):
         predcited_locs, predcited_scores = self.rpn(self.feature_extractor(IMG))
-        anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        roi = self.proposal_creator.generate(anchors_of_img, predcited_scores[0], predcited_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
+        anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
+        roi = self.proposal_creator.create(anchors_of_img, predcited_scores[0], predcited_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(roi.shape)
 
 @unittest.skip('passed')
@@ -161,7 +161,7 @@ class TestRPNLoss(unittest.TestCase):
         
     def test_rpn_loss(self):
         predicted_scores,predicted_locs = self.rpn(self.feature)
-        anchors_of_image = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
+        anchors_of_image = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         cls_loss,reg_loss = self.rpn_loss(anchors_of_image,predicted_scores[0],predicted_locs[0],BBOX,IMG_HEIGHT,IMG_WIDTH)
         print(cls_loss)
         print(reg_loss)
@@ -218,8 +218,8 @@ class TestProposalCreator(unittest.TestCase):
     def test_generate(self):
         feature= self.feature_extractor(IMG)
         predicted_scores,predicted_locs= self.rpn(feature)
-        anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
+        anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
+        proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(proposed_roi_bboxes.shape)
 
 @unittest.skip('passed')
@@ -234,9 +234,9 @@ class TestProposalTargetCreator(unittest.TestCase):
     def test_generate(self):
         feature= self.feature_extractor(IMG)
         predicted_scores,predicted_locs  = self.rpn(feature)   
-        anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
-        roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
+        anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
+        proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
+        roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.create(proposed_roi_bboxes,BBOX,LABELS)
         print(roi.shape)
         print(gt_roi_loc.shape)
         print(gt_roi_label)
@@ -255,12 +255,12 @@ class TestFastRCNN(unittest.TestCase):
     def test_forward(self):
         feature= self.feature_extractor(IMG)
         predicted_scores,predicted_locs  = self.rpn(feature)
-        anchors_of_img = self.anchor_creator.generate(FEATURE_HEIGHT,FEATURE_WIDTH)
+        anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         
-        proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
+        proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print('Proposed ROI BBOXES Size:{}'.format(proposed_roi_bboxes.shape))
 
-        sampled_roi,gt_roi_label,gt_roi_loc= self.anchor_target_creator.generate(proposed_roi_bboxes,BBOX,LABELS)
+        sampled_roi,gt_roi_label,gt_roi_loc= self.anchor_target_creator.create(proposed_roi_bboxes,BBOX,LABELS)
         print('Sampled ROI Size:{}'.format(sampled_roi.shape))
         print('GT ROI LOC Size:{}'.format(gt_roi_loc.shape))
         print('GT ROI LABEL Size:{}'.format(gt_roi_label.shape))

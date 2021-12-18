@@ -41,6 +41,10 @@ class VGG16FeatureExtractor(nn.Module):
         x = self.conv5(x)
         return x
 
+    def predict(self,im_data):
+        return self.forward(im_data)
+
+
     @staticmethod
     def set_trainable( model, requires_grad):
         for p in model.parameters():

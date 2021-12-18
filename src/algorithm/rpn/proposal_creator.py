@@ -16,7 +16,7 @@ class ProposalCreator:
     
     
     # Note we generate proposal for each image independently
-    def generate(self, 
+    def create(self, 
                 anchors_of_image,  # [Num_anchors]
                 predicted_scores,  # [Num_base_anchors*2,feature_h,feature_w]
                 predicted_locs,    # [Num_base_anchors*4,feature_h,feature_w]

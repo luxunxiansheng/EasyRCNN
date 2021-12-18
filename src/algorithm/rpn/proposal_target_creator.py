@@ -14,7 +14,7 @@ class ProposalTargetCreator(object):
         self.negative_iou_thresh_lo = config.RPN.PROPOSAL_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD_LO  # NOTE:default 0.1 in py-faster-rcnn
         
 
-    def generate(self, 
+    def create(self, 
                     proposed_roi_bboxs, 
                     gt_bboxs, 
                     gt_labels,

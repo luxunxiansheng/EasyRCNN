@@ -61,9 +61,9 @@ class FasterRCNNTrainer:
 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
-                features_batch = self.feature_extractor(images_batch.float())
+                features_batch = self.feature_extractor.predict(images_batch.float())
 
-                rpn_predicted_scores_batch, rpn_predicted_locs_batch = self.rpn(features_batch)
+                rpn_predicted_scores_batch, rpn_predicted_locs_batch = self.rpn.predict(features_batch)
                 
                 total_rpn_cls_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 total_rpn_reg_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
@@ -82,9 +82,9 @@ class FasterRCNNTrainer:
                     rpn_predicted_scores = rpn_predicted_scores_batch[image_index]
                     rpn_predicted_locs = rpn_predicted_locs_batch[image_index]
 
-                    anchors_of_img = self.anchor_creator.generate(feature_height,feature_width)
+                    anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
                     
-                    rpn_cls_loss,rpn_reg_los=self.rpn_loss( anchors_of_img,
+                    rpn_cls_loss,rpn_reg_los=self.rpn_loss.compute( anchors_of_img,
                                                             rpn_predicted_scores,
                                                             rpn_predicted_locs,
                                                             gt_bboxes,
@@ -95,7 +95,7 @@ class FasterRCNNTrainer:
                     total_rpn_cls_loss = total_rpn_cls_loss + rpn_cls_loss
                     total_rpn_reg_loss = total_rpn_reg_loss + rpn_reg_los
 
-                    proposed_roi_bboxes =self.proposal_creator.generate(anchors_of_img,
+                    proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,
                                                                         rpn_predicted_scores.detach(),
                                                                         rpn_predicted_locs.detach(),
                                                                         img_height,
@@ -103,14 +103,14 @@ class FasterRCNNTrainer:
                                                                         feature_height,
                                                                         feature_width)
 
-                    sampled_roi,gt_roi_label,gt_roi_loc = self.proposal_target_creator.generate(proposed_roi_bboxes,
+                    sampled_roi,gt_roi_label,gt_roi_loc = self.proposal_target_creator.create(proposed_roi_bboxes,
                                                                                                 gt_bboxes,
                                                                                                 gt_labels,
                                                                                                 img_height,
                                                                                                 img_width)
                     
-                    predicted_roi_cls_score,predicted_roi_loc = self.fast_rcnn(feature,sampled_roi)
-                    roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss(predicted_roi_cls_score,
+                    predicted_roi_cls_score,predicted_roi_loc = self.fast_rcnn.predict(feature,sampled_roi)
+                    roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_roi_cls_score,
                                                                     predicted_roi_loc,
                                                                     gt_roi_label,
                                                                     gt_roi_loc)                                                                    

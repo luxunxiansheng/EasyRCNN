@@ -28,3 +28,6 @@ class RPN(nn.Module):
         predicted_locs = self.bbox_conv(hidden) 
 
         return predicted_scores,predicted_locs
+
+    def predict(self,features):
+        return self.forward(features)
