@@ -23,6 +23,8 @@ class FasterRCNN(nn.Module):
         self.n_class = self.fast_rcnn.n_classes
         self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)
+        self.loc_norm_mean = torch.tensor(config.FASTER_RCNN.LOC_NORM_MEAN).to(device)
+        self.loc_norm_std =  torch.tensor(config.FASTER_RCNN.LOC_NORM_STD).to(device)
 
     def predict(self,image_batch):
         return self.forward(image_batch)
@@ -68,6 +70,11 @@ class FasterRCNN(nn.Module):
 
     def detect(self, feature, proposed_roi_bboxes,img_height,img_width,score_threshold=0.05,nms_threshold=0.3):
         predicted_roi_score,predicted_roi_loc= self.fast_rcnn.predict(feature,proposed_roi_bboxes)
+
+        mean = self.loc_norm_mean.repeat(self.n_class+1)[None]
+        std  = self.loc_norm_std.repeat(self.n_class+1)[None]
+
+        predicted_roi_loc = predicted_roi_loc * std + mean
         
         # post processing 
         predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)
