@@ -6,7 +6,6 @@ from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
 from rpn.anchor_creator import AnchorCreator
-from rpn.anchor_target_creator import AnchorTargetCreator
 from feature_extractor import FeatureExtractorFactory
 from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss

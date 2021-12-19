@@ -12,13 +12,13 @@ class ProposalTargetCreator(object):
         self.positive_iou_thresh = config.RPN.PROPOSAL_TARGET_CREATOR.POSITIVE_IOU_THRESHOLD
         self.negative_iou_thresh_hi = config.RPN.PROPOSAL_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD_HI
         self.negative_iou_thresh_lo = config.RPN.PROPOSAL_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD_LO  # NOTE:default 0.1 in py-faster-rcnn
-        
+        self.loc_normalize_mean = torch.tensor(config.RPN.PROPOSAL_TARGET_CREATOR.LOC_NORM_MEAN)
+        self.loc_normalize_std  = torch.tensor(config.RPN.PROPOSAL_TARGET_CREATOR.LOC_NORM_STD)
 
     def create(self, 
                     proposed_roi_bboxs, 
                     gt_bboxs, 
                     gt_labels,
-                    
                 ):
         """Assigns ground truth to sampled proposals."""
         
@@ -57,6 +57,7 @@ class ProposalTargetCreator(object):
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
         gt_roi_loc = Utility.bbox2loc(sampled_roi, gt_bboxes)
+        gt_roi_loc = (gt_roi_loc - self.loc_normalize_mean.to(gt_roi_loc.device)) / self.loc_normalize_std.to(gt_roi_loc.device)
         return sampled_roi,gt_roi_label,gt_roi_loc
 
 
