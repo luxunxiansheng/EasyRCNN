@@ -23,6 +23,10 @@ class FasterRCNN(nn.Module):
         self.n_class = self.fast_rcnn.n_classes
         self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)
+
+    def predict(self,image_batch):
+        return self.forward(image_batch)
+
         
     def forward(self,image_batch):
         feature_batch= self.feature_extractor.predict(image_batch)

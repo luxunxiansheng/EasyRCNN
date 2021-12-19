@@ -45,7 +45,7 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-config_path = work_folder+'src/config/experiments/exp02_config.yaml'
+config_path = work_folder+'src/config/experiments/exp01_config.yaml'
 config = combine_configs(config_path)
 
 @unittest.skip("passed")
@@ -65,7 +65,7 @@ class TestAnchorCreator(unittest.TestCase):
     
     
     def test_anchor_creation(self):
-        anchors = self.achor_creator.create(2,2)
+        anchors = self.achor_creator.create(2,4)
         print(anchors.shape)
         print(anchors)
 
@@ -90,7 +90,7 @@ class TestAnchorTargetCreator(unittest.TestCase):
         self.voc_dataset = VOCDataset(config)
         image,bboxes,lables,diff,img_file= self.voc_dataset[2225]
         image = image.unsqueeze(0)
-        feature = self.feature_extractor(image.float())
+        feature = self.feature_extractor.predict(image.float())
         feature_height,feature_width = feature.shape[2:]
         anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
         img_height,img_width = image.shape[2:]
@@ -117,7 +117,7 @@ class TestProposalCreator(unittest.TestCase):
         self.rpn = RPN(config)
     
     def test_rpn(self):
-        predcited_locs, predcited_scores = self.rpn(self.feature_extractor(IMG))
+        predcited_locs, predcited_scores = self.rpn.predict(self.feature_extractor(IMG))
         anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         roi = self.proposal_creator.create(anchors_of_img, predcited_scores[0], predcited_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(roi.shape)
@@ -133,7 +133,7 @@ class TestFeatureExtractor(unittest.TestCase):
 
     def test_vgg16_extractor_forward(self):
         extractor = self.factory.create_feature_extractor('vgg16')
-        features = extractor(IMG)
+        features = extractor.predict(IMG)
         self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))   
 
 
@@ -146,7 +146,7 @@ class TestRPN(unittest.TestCase):
         #summary(self.rpn, (3, 800, 800),device='cpu')
         
     def test_rpn_forward(self):
-        predicted_scores,predicted_locs = self.rpn(self.feature)
+        predicted_scores,predicted_locs = self.rpn.predict(self.feature)
         self.assertEqual(predicted_scores.shape, torch.Size([1, 18,50,50]))
         self.assertEqual(predicted_locs.shape,   torch.Size([1, 36,50,50]))
         
@@ -154,13 +154,13 @@ class TestRPN(unittest.TestCase):
 class TestRPNLoss(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor= FeatureExtractorFactory().create_feature_extractor('vgg16')
-        self.feature = self.feature_extractor(IMG)
+        self.feature = self.feature_extractor.predict(IMG)
         self.rpn = RPN(config)
         self.rpn_loss = RPNLoss(config)
         self.anchor_creator = AnchorCreator(config)
         
     def test_rpn_loss(self):
-        predicted_scores,predicted_locs = self.rpn(self.feature)
+        predicted_scores,predicted_locs = self.rpn.predict(self.feature)
         anchors_of_image = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         cls_loss,reg_loss = self.rpn_loss(anchors_of_image,predicted_scores[0],predicted_locs[0],BBOX,IMG_HEIGHT,IMG_WIDTH)
         print(cls_loss)
@@ -216,8 +216,8 @@ class TestProposalCreator(unittest.TestCase):
         self.anchor_creator = AnchorCreator(config)
 
     def test_generate(self):
-        feature= self.feature_extractor(IMG)
-        predicted_scores,predicted_locs= self.rpn(feature)
+        feature= self.feature_extractor.predict(IMG)
+        predicted_scores,predicted_locs= self.rpn.predict(feature)
         anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(proposed_roi_bboxes.shape)
@@ -233,7 +233,7 @@ class TestProposalTargetCreator(unittest.TestCase):
     
     def test_generate(self):
         feature= self.feature_extractor(IMG)
-        predicted_scores,predicted_locs  = self.rpn(feature)   
+        predicted_scores,predicted_locs  = self.rpn.predict(feature)   
         anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         roi,gt_roi_loc,gt_roi_label = self.anchor_target_creator.create(proposed_roi_bboxes,BBOX,LABELS)
@@ -253,8 +253,8 @@ class TestFastRCNN(unittest.TestCase):
         self.fast_rcnn_loss = FastRCNNLoss(config)
     
     def test_forward(self):
-        feature= self.feature_extractor(IMG)
-        predicted_scores,predicted_locs  = self.rpn(feature)
+        feature= self.feature_extractor.predict(IMG)
+        predicted_scores,predicted_locs  = self.rpn.predict(feature)
         anchors_of_img = self.anchor_creator.create(FEATURE_HEIGHT,FEATURE_WIDTH)
         
         proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
@@ -266,7 +266,7 @@ class TestFastRCNN(unittest.TestCase):
         print('GT ROI LABEL Size:{}'.format(gt_roi_label.shape))
 
         
-        predicted_roi_cls_score,predicted_roi_cls_loc = self.fast_rcnn(feature[0],sampled_roi)
+        predicted_roi_cls_score,predicted_roi_cls_loc = self.fast_rcnn.predict(feature[0],sampled_roi)
 
         print('Predicted ROI CLS LOC Size:{}'.format(predicted_roi_cls_loc.shape))
         print('Predicted ROI CLS SCORE Size:{}'.format(predicted_roi_cls_score.shape))
@@ -278,10 +278,11 @@ class TestFastRCNN(unittest.TestCase):
 @unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
-        self.faster_rcnn = FasterRCNN(config)
+        self.writer = SummaryWriter(config.LOG.LOG_DIR)
+        self.faster_rcnn = FasterRCNN(config,writer=self.writer)
 
     def test_forward(self):
-        bboxes,labels,scores = self.faster_rcnn(IMG)
+        bboxes,labels,scores = self.faster_rcnn.predict(IMG)
 
 unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):

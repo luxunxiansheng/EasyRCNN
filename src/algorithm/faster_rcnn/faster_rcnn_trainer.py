@@ -99,9 +99,8 @@ class FasterRCNNTrainer:
 
                     sampled_roi,gt_roi_label,gt_roi_loc = self.proposal_target_creator.create(proposed_roi_bboxes,
                                                                                                 gt_bboxes,
-                                                                                                gt_labels,
-                                                                                                img_height,
-                                                                                                img_width)
+                                                                                                gt_labels
+                                                                                            )
                     
                     predicted_roi_cls_score,predicted_roi_loc = self.fast_rcnn.predict(feature,sampled_roi)
                     roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_roi_cls_score,

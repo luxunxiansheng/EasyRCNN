@@ -45,7 +45,7 @@ class RPNLoss(nn.Module):
         loc_loss = self._soomth_l1_loss(predicted_locs,target_locs,self.sigma)
 
         # Normalize by the number of the  positives
-        regression_loss = loc_loss/((target_labels>0).sum().float())  
+        regression_loss = loc_loss/((target_labels>=0).sum().float())  
 
         return classification_loss,regression_loss
 

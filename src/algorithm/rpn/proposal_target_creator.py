@@ -18,8 +18,7 @@ class ProposalTargetCreator(object):
                     proposed_roi_bboxs, 
                     gt_bboxs, 
                     gt_labels,
-                    loc_normalize_mean=torch.tensor([0., 0., 0., 0.]),
-                    loc_normalize_std=torch.tensor([0.1, 0.1, 0.2, 0.2])
+                    
                 ):
         """Assigns ground truth to sampled proposals."""
         
@@ -58,8 +57,6 @@ class ProposalTargetCreator(object):
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
         gt_roi_loc = Utility.bbox2loc(sampled_roi, gt_bboxes)
-        gt_roi_loc = (gt_roi_loc - loc_normalize_mean) /loc_normalize_std
-
         return sampled_roi,gt_roi_label,gt_roi_loc
 
 

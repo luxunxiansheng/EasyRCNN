@@ -73,10 +73,7 @@ class ProposalCreator:
         proposed_roi_bboxs = proposed_roi_bboxs[order,:]
         proposed_objectness_scores = proposed_objectness_scores[order]
 
-        # Apply nms (e.g. threshold = 0.7).
-        
-        
-        
+        # Apply nms (e.g. threshold = 0.7)
         proposed_roi_bboxs_xyxy=proposed_roi_bboxs.index_select(dim=1,
                                                                 index=torch.tensor([1,0,3,2],
                                                                 device=proposed_roi_bboxs.device))
