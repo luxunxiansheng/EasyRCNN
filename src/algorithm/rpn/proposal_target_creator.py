@@ -11,16 +11,24 @@ class ProposalTargetCreator(object):
         self.positive_ratio = config.RPN.PROPOSAL_TARGET_CREATOR.POSITIVE_RATIO
         self.positive_iou_thresh = config.RPN.PROPOSAL_TARGET_CREATOR.POSITIVE_IOU_THRESHOLD
         self.negative_iou_thresh_hi = config.RPN.PROPOSAL_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD_HI
-        self.negative_iou_thresh_lo = config.RPN.PROPOSAL_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD_LO  # NOTE:default 0.1 in py-faster-rcnn
+        self.negative_iou_thresh_lo = config.RPN.PROPOSAL_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD_LO  
         self.loc_normalize_mean = torch.tensor(config.RPN.PROPOSAL_TARGET_CREATOR.OFFSET_NORM_MEAN)
         self.loc_normalize_std  = torch.tensor(config.RPN.PROPOSAL_TARGET_CREATOR.OFFSET_NORM_STD)
 
     def create(self, 
-                    proposed_roi_bboxs, 
-                    gt_bboxs, 
-                    gt_labels,
-                ):
-        """Assigns ground truth to sampled proposals."""
+                    proposed_roi_bboxs: torch.Tensor,
+                    gt_bboxs: torch.Tensor,
+                    gt_labels: torch.Tensor,
+                ):               
+        """Assigns ground truth to sampled proposals.
+            Args:
+                proposed_roi_bboxs: (n_proposals, 4) tensor.
+                gt_bboxs: (n_gt, 4) tensor.
+                gt_labels: (n_gt,) tensor.
+
+            Returns:
+                sampled_proposals: (n_sampled, 4) tensor.
+        """
         
         
         n_positive_roi_per_image = int(self.n_sample * self.positive_ratio)

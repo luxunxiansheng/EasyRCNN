@@ -4,7 +4,18 @@ import torch.nn as nn
 from common import CNNBlock
 
 class VGG16FeatureExtractor(nn.Module):
-    def __init__(self, img_channels=3, feature_channels=512, bn=False):
+    def __init__(self, 
+                img_channels:int =3, 
+                feature_channels:int =512, 
+                bn:bool=False):
+        """
+            Args:
+                img_channels (int): number of channels of input image
+                feature_channels (int): number of channels of feature maps
+                bn (bool): whether to use batch normalization
+        
+        """
+
         super().__init__()
         
         self.img_channels =  img_channels
@@ -32,7 +43,16 @@ class VGG16FeatureExtractor(nn.Module):
                                     CNNBlock(512, 512, 3, same_padding=True, bn=bn),
                                     CNNBlock(512, feature_channels, 3, same_padding=True, bn=bn))
 
-    def forward(self, im_data):
+    def forward(self, im_data:torch.Tensor)->torch.Tensor:
+        """extract feature maps
+
+        Args:
+            im_data (torch.Tensor): shape = (batch_size, img_channel, img_size, img_size)
+
+        Returns:
+            torch.Tensor: shape = (batch_size, feature_channels, feature_height, feature_width)
+        """
+
         assert im_data.size(1) == self.img_channels
         x = self.conv1(im_data)
         x = self.conv2(x)
@@ -41,7 +61,11 @@ class VGG16FeatureExtractor(nn.Module):
         x = self.conv5(x)
         return x
 
-    def predict(self,im_data):
+    def predict(self,im_data:torch.Tensor)->torch.Tensor:
+        """
+            A explicit function to predict the feature maps by calling forward function.        
+        """
+
         return self.forward(im_data)
 
 

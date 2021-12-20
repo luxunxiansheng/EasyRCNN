@@ -1,9 +1,11 @@
+import torch
 import torch.nn as nn
+from yacs.config import CfgNode
 from common import CNNBlock, weights_normal_init
 
 
 class RPN(nn.Module):
-    def __init__(self,config):
+    def __init__(self,config:CfgNode):
         super().__init__()
     
         self.num_base_anchors = len(config.RPN.ANCHOR_CREATOR.ANCHOR_SCALES)**2
@@ -15,7 +17,15 @@ class RPN(nn.Module):
         weights_normal_init(self.score_conv, dev=0.01)
         weights_normal_init(self.bbox_conv, dev=0.001)
 
-    def forward(self,features):
+    def forward(self,features:torch.Tensor):
+        """
+        Args:
+            features: (N, C, H, W)
+
+        Returns:
+            scores: (N, num_base_anchors, H, W)
+            bboxs: (N, num_base_anchors*4, H, W)
+        """
         # [batch_size, middle_channels, feature_height, feature_width]
         hidden = self.conv1(features)  
 

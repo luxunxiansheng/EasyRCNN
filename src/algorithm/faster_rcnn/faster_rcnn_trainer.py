@@ -1,9 +1,13 @@
+from torch.types import Device
+from torch.utils.data.dataset import Dataset
+from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 
 import torch
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
-from torchmetrics.detection.map import MAP 
+from torchmetrics.detection.map import MAP
+from yacs.config import CfgNode 
 
 from faster_rcnn.faster_rcnn_network import FasterRCNN
 from rpn.proposal_target_creator import ProposalTargetCreator
@@ -14,7 +18,12 @@ from checkpoint_tool import  load_checkpoint, save_checkpoint
 
 
 class FasterRCNNTrainer:
-    def __init__(self,config,dataset,writer,device) -> None:
+    def __init__(self,
+                config:CfgNode,
+                dataset:Dataset,
+                writer:SummaryWriter,
+                device:Device=Device('cpu')) -> None:
+
         self.config = config
         self.writer = writer
         self.device = device
@@ -182,7 +191,25 @@ class FasterRCNNTrainer:
         steps = ckpt['steps']
         return steps,start_epoch
 
-    def _evaluate(self, gt_bboxes, gt_labels, predicted_scores, predicted_labels, predicted_bboxes):
+    def _evaluate(self, 
+                gt_bboxes:torch.Tensor, 
+                gt_labels:torch.Tensor, 
+                predicted_scores:torch.Tensor, 
+                predicted_labels:torch.Tensor,
+                predicted_bboxes:torch.Tensor)->float:
+        """
+        Args:
+            gt_bboxes: (N,4)
+            gt_labels: (N,)
+            predicted_scores: (N,)
+            predicted_labels: (N,)
+            predicted_bboxes: (N,4)
+
+        Returns:
+            map: float
+
+        """
+
         preds = [dict(
                     # convert yxyx to xyxy
                     boxes = predicted_bboxes.index_select(1,torch.tensor([1,0,3,2],device=predicted_bboxes.device)),

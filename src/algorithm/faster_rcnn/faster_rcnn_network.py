@@ -2,7 +2,10 @@ import torch
 from torch import nn
 
 from torch.nn import functional as F
+from torch.types import Device
+from torch.utils.tensorboard.writer import SummaryWriter
 from torchvision.ops import nms
+from yacs.config import CfgNode
 
 from fast_rcnn.fast_rcnn_network import FastRCNN
 from feature_extractor import FeatureExtractorFactory
@@ -12,7 +15,11 @@ from rpn.region_proposal_network import RPN
 from location_utility import LocationUtility
 
 class FasterRCNN(nn.Module):
-    def __init__(self,config,writer,device='cpu'):
+    def __init__(self,
+                config:CfgNode,
+                writer:SummaryWriter,
+                device:Device='cpu'):
+
         super().__init__()
         self.config = config
         self.writer = writer
@@ -26,11 +33,32 @@ class FasterRCNN(nn.Module):
         self.offset_norm_mean = torch.tensor(config.FASTER_RCNN.OFFSET_NORM_MEAN).to(device)
         self.offset_norm_std =  torch.tensor(config.FASTER_RCNN.OFFSET_NORM_STD).to(device)
 
-    def predict(self,image_batch):
+    def predict(self,image_batch:torch.Tensor):
+        """A explict interface for predict rahter than forward
+
+        Args:
+            image_batch (torch.Tensor): [batch_size,3,height,width]
+
+        Returns:
+            return forward result
+        """
         return self.forward(image_batch)
 
         
     def forward(self,image_batch):
+        """ A forward interface for faster rcnn
+        
+        Args:
+            image_batch (torch.Tensor): [batch_size,3,height,width]
+        
+        returns:
+            return a dict contains:
+                'bboxes': [batch_size,n_bboxes,4]
+                'labels': [batch_size,n_bboxes]
+                'scores': [batch_size,n_bboxes]
+
+        """
+
         feature_batch= self.feature_extractor.predict(image_batch)
         rpn_predicted_score_batch ,rpn_predicted_offset_batch = self.rpn.predict(feature_batch)
         

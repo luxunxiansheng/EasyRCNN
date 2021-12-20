@@ -1,15 +1,35 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.types import Device
+from yacs.config import CfgNode
 
 
 class FastRCNNLoss(nn.Module):
-    def __init__(self,config,device='cpu'):
+    """ 
+    Detection Losses : classfication loss and regression loss  
+    """
+    def __init__(self,config:CfgNode,device:Device='cpu'):
         super().__init__()
         self.roi_sigma = config.FAST_RCNN.ROI_SIGMMA
         self.device = device
     
-    def forward(self,predicted_scores,predicted_offsets,target_labels,target_offsets):
+    def forward(self,
+                predicted_scores:torch.Tensor,
+                predicted_offsets:torch.Tensor,
+                target_labels:torch.Tensor,
+                target_offsets:torch.Tensor):
+        """
+        Args:
+            predicted_scores: (B, N, C)
+            predicted_offsets: (B, N, 4)
+            target_labels: (B, N)
+            target_offsets: (B, N, 4)
+
+        Returns:
+            classification_loss: (B,), regression_loss: (B,)
+        """
+
         classfication_loss = F.cross_entropy(predicted_scores,target_labels)
 
         n_sample = target_offsets.shape[0]
@@ -28,10 +48,33 @@ class FastRCNNLoss(nn.Module):
 
         return classfication_loss,regression_loss
 
-    def compute(self,predicted_scores,predicted_offsets,target_labels,target_offsets):
+    def compute(self,
+                predicted_scores:torch.Tensor,
+                predicted_offsets:torch.Tensor,
+                target_labels:torch.Tensor,
+                target_offsets:torch.Tensor):
+        """
+            A explicit function to compute the loss by calling forward function
+        """
+        
         return self.forward(predicted_scores,predicted_offsets,target_labels,target_offsets)
     
-    def _soomth_l1_loss(self, predicted_offsets, target_offsets,sigma):
+    def _soomth_l1_loss(self,
+                        predicted_offsets:torch.Tensor, 
+                        target_offsets:torch.Tensor,
+                        sigma:float):
+        """
+        calculate smooth L1 loss 
+
+        Args:
+            predicted_offsets: (B, N, 4)
+            target_offsets: (B, N, 4)
+            sigma: float
+        
+        Returns:
+            loss: (B,)
+        """
+
         sigma2 = sigma**2
         diff = predicted_offsets - target_offsets
         abs_diff = diff.abs()

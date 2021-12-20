@@ -4,7 +4,14 @@ from torch.functional import Tensor
 class LocationUtility:
     @staticmethod
     def offset2bbox(src_anchor:Tensor, offset:Tensor) -> Tensor:
-        """Decode bounding boxes from bounding box offsets and scales."""
+        """Decode bounding boxes from bounding box offsets and scales.
+        Args:
+            src_anchor (Tensor): source anchor, shape (n, 4)
+            offset (Tensor): encoded offsets, shape (n, 4)
+        
+        Returns:
+            Tensor: decoded bounding boxes, shape (n, 4)
+        """
 
         if src_anchor.shape[0] == 0:
             return torch.zeros((0, 4), dtype=offset.dtype)
@@ -35,6 +42,13 @@ class LocationUtility:
 
     @staticmethod
     def bbox2offset(source_bbox:Tensor, target_bbox:Tensor) -> Tensor:
+        """Encode bounding boxes to bounding box offsets.
+        Args:
+            source_bbox (Tensor): source bounding boxes, shape (n, 4)
+            target_bbox (Tensor): target bounding boxes, shape (n, 4)
+        return:
+            Tensor: encoded offsets, shape (n, 4)
+        """
         source_roi_height = source_bbox[:, 2] - source_bbox[:, 0]
         source_roi_width  = source_bbox[:, 3] - source_bbox[:, 1]
         source_roi_ctr_y  = source_bbox[:, 0] + 0.5 * source_roi_height

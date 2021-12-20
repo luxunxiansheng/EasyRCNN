@@ -1,31 +1,40 @@
-import sys
-sys.path.append('..')
-
 import torch
 from torchvision.ops import nms
 from location_utility import LocationUtility
 
 class ProposalCreator:
-    def __init__(self,config,n_pre_nms=12000,n_post_nms=2000):
-        self.n_pre_nms = n_pre_nms
-        self.n_post_nms = n_post_nms
+    def __init__(self,config):
+        self.n_pre_nms = config.PROPOSAL_CREATOR.N_PRE_NMS
+        self.n_post_nms= config.PROPOSAL_CREATOR.N_POST_NMS
                 
         self.nms_thresh = config.RPN.PROPOSAL_CREATOR.NMS_THRESHOLD
         self.min_size =   config.RPN.PROPOSAL_CREATOR.MIN_SIZE
 
-    
-    
-    # Note we generate proposal for each image independently
     def create(self, 
-                anchors_of_image,  # [Num_anchors]
-                predicted_scores,  # [Num_base_anchors*2,feature_h,feature_w]
-                predicted_offsets,    # [Num_base_anchors*4,feature_h,feature_w]
-                img_height,
-                img_width,
-                feature_height,
-                feature_width,
-                scale=1.):
-        
+                anchors_of_image: torch.Tensor,  
+                predicted_scores: torch.Tensor,  
+                predicted_offsets: torch.Tensor,
+                img_height: int,
+                img_width: int,
+                feature_height: int,
+                feature_width: int,
+                scale:float=1.):
+        """
+            Generate proposals from anchors and predicted scores and offsets.
+
+            Args:
+                anchors_of_image: (N, 4) tensor.
+                predicted_scores: (N, 1) tensor.
+                predicted_offsets: (N, 4) tensor.
+                img_height: int.
+                img_width: int.
+                feature_height: int.
+                feature_width: int.
+                scale: float.
+            
+            Returns:
+                proposals: (n_proposals, 4) tensor.
+        """
                 
         #------------------------Locs---------------------------------#
         # [feature_height,feature_width, num_base_anchors * 4]

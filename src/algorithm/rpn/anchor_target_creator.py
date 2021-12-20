@@ -1,37 +1,35 @@
-import torch    
+import torch
+from torch.types import Device    
 from torchvision.ops import box_iou
+from yacs.config import CfgNode
 from location_utility import LocationUtility
 
 class AnchorTargetCreator:
     """Assign the ground truth bounding boxes to anchors."""
-    def __init__(self,config,device='cpu'):
+    def __init__(self,config:CfgNode,device:Device='cpu'):
+        
         self.n_samples =      config.RPN.ANCHOR_TARGET_CREATOR.N_SAMPLES
         self.pos_iou_thresh = config.RPN.ANCHOR_TARGET_CREATOR.POSITIVE_IOU_THRESHOLD
         self.neg_iou_thresh = config.RPN.ANCHOR_TARGET_CREATOR.NEGATIVE_IOU_THRESHOLD
         self.pos_ratio =      config.RPN.ANCHOR_TARGET_CREATOR.POSITIVE_RATIO
         self.device =         device
 
-    def create(self, anchors_of_image,gt_bboxs,img_H,img_W):
+    def create(self, 
+            anchors_of_image:torch.Tensor,
+            gt_bboxs:torch.Tensor,
+            img_H:int,
+            img_W:int)->torch.Tensor:
         """Generate the labels and the target regression values.
-
+        
         Args:
-            anchors_of_image (Tensor): all the anchors of the shape (n_anchors, 4)
-            gt_bboxs (Tensor): Ground truth bounding boxes of the shape (n_gt_boxes, 4)
-            img_H (int): Image height
-            img_W (int): Image width
+            anchors_of_image: (N,4) tensor, the anchors of the image.
+            gt_bboxs: (M,4) tensor, the ground truth bounding boxes.
+            img_H: int the height of the image.
+            img_W: int the width of the image.
 
         Returns:
-            labels(Tensor): The labels of the shape (n_anchors, ), 
-                            each element is either -1, 0 or 1. -1 
-                            means ignore, 0 means negative and 1 
-                            means positive.
-
-                            Note that the final labels have been 
-                            sampled to keep the balance of positive
-                            and negative.
-
-            locs(Tensor):   The regression values of the shape (n_anchors,4)
-                            All the valid anchors have been computed.
+            labels: (N,), the labels of the anchors.
+            offsets: (N,4) tensor, the offsets of the anchors.
         """
         num_anchors_of_img = len(anchors_of_image)
 
@@ -51,7 +49,6 @@ class AnchorTargetCreator:
         # label: 1 is positive, 0 is negative, -1 is dont care
         labels_for_valid_anchor = torch.empty((len(valid_indices),), dtype=torch.int32,device=self.device)
         labels_for_valid_anchor.fill_(-1)
-
         
         argmax_ious_for_valid_anchor, max_ious_for_valid_anchor, argmax_ious_for_gt_box = self._calc_ious(valid_anchors,gt_bboxs)
         
@@ -91,45 +88,78 @@ class AnchorTargetCreator:
         offsets = self._unmap(valid_offsets, num_anchors_of_img, valid_indices, fill=0)
         
         return labels,offsets 
+    
+    def _calc_ious(self, 
+                anchors:torch.Tensor,
+                gt_bboxs:torch.Tensor)->torch.Tensor:
 
+        """Calculate the IoU of anchors with ground truth boxes.
         
-    def _calc_ious(self, anchors,gt_bboxs):
+        Args:
+            anchors: (N,4) tensor, the anchors of the image.
+            gt_bboxs: (M,4) tensor, the ground truth bounding boxes.
+        
+        Returns:
+            argmax_ious_for_anchor: (N,) tensor, the index of the ground truth box with highest IoU overlap with the anchor. 
+            max_ious_for_anchor: (N,) tensor, the IoU of the anchor with the ground truth box with highest IoU overlap.
+            argmax_ious_for_gt_box: (M,) tensor, the index of the anchor with highest IoU overlap with the ground truth box.              
+        """
         # ious between the anchors and the gt boxes
         ious = box_iou(anchors, gt_bboxs)
 
         # for each gt box, find the anchor with the highest iou
-        #argmax_ious_for_gt_box = ious.argmax(dim=0)
-        #max_ious_for_gt_box = ious[argmax_ious_for_gt_box,torch.arange(ious.shape[1])]
-
         max_ious_for_gt_box,argmax_ious_for_gt_box = ious.max(dim=0)
 
         # for each gt box, there mihgt be multiple anchors with the same highest iou
         argmax_ious_for_gt_box = torch.where(ious == max_ious_for_gt_box)[0]
 
         # for each anchor, find the gt box with the highest iou
-        #argmax_ious_for_anchor = ious.argmax(dim=1)
-        #max_ious_for_anchor = ious[torch.arange(len(anchor_indices)), argmax_ious_for_anchor]
-
         max_ious_for_anchor,argmax_ious_for_anchor = ious.max(dim=1)
         
         return argmax_ious_for_anchor, max_ious_for_anchor, argmax_ious_for_gt_box
 
     @staticmethod
-    def _get_inside_indices(anchors, H, W):
-        # Calc indicies of anchors which are located completely inside of the image
-        # whose size is speficied.
+    def _get_inside_indices(anchors:torch.Tensor, img_H:int, img_W:int)->torch.Tensor:
+                            
+        """Calc indicies of anchors which are located completely inside of the image
+        whose size is speficied.
+        
+        Args:
+            anchors: (N,4) tensor, all the anchors of the image.
+            img_H: int the height of the image.
+            img_W: int the width of the image.
+        
+        Returns:
+            indices: (N,) tensor, the indices of the anchors which are located completely inside of the image.
+
+        """
         indices_inside = torch.where(
             (anchors[:, 0] >= 0) &
             (anchors[:, 1] >= 0) &
-            (anchors[:, 2] <= H) &
-            (anchors[:, 3] <= W)
+            (anchors[:, 2] <= img_H) &
+            (anchors[:, 3] <= img_W)
         )[0]
+        
         return indices_inside
 
 
-    def _unmap(self,data, count, index, fill=0):
-        # Unmap a subset of item (data) back to the original set of items (of
-        # size count)
+    def _unmap(self,
+            data:torch.Tensor, 
+            count:int, 
+            index:torch.Tensor,
+            fill:int=0):
+
+        """Unmap a subset of item (data) back to the original set of items (of size count)
+        
+        Args:
+            data: (N,M) tensor, the subset of data to unmap.
+            count: int, the size of the original set of items.
+            index: (N,) tensor, the indices of the subset of data to unmap.
+            fill: the value to fill the unmapped item with.
+        
+        Returns:
+            data: (count,M) tensor, the original set of items.
+        """
 
         if len(data.shape) == 1:
             ret = torch.empty((count,), dtype=data.dtype,device=self.device)
