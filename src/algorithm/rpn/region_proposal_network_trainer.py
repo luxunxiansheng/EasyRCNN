@@ -9,9 +9,8 @@ from rpn.anchor_creator import AnchorCreator
 from feature_extractor import FeatureExtractorFactory
 from rpn.region_proposal_network import RPN
 from rpn.region_proposal_network_loss import RPNLoss
-from visual_tool import draw_img_bboxes_labels
 
-#from tool.checkpoint_tool import load_checkpoint, save_checkpoint
+
 
 class RPNTrainer:
     logger = logging.getLogger('RPNTrainer')
@@ -49,7 +48,7 @@ class RPNTrainer:
                 images,bboxes,labels = images.to(self.device),bboxes.to(self.device),labels.to(self.device)
                 
                 features = self.feature_extractor(images.float())
-                predicted_scores, predicted_locs = self.rpn(features)
+                predicted_scores, predicted_offsets = self.rpn(features)
                 
                 total_cls_loss = torch.tensor(0.0,requires_grad=True).to(self.device)
                 total_reg_loss = torch.tensor(0.0,requires_grad=True).to(self.device)
@@ -57,7 +56,7 @@ class RPNTrainer:
                     img_height,img_width = images[image_index].shape[1:]
                     feature_height,feature_width = features[image_index].shape[1:]
                     anchors_of_image = self.anchor_creator.create(feature_height,feature_width)
-                    cls_loss,reg_los=self.loss(anchors_of_image,predicted_scores[image_index],predicted_locs[image_index],bboxes[image_index],img_height,img_width)
+                    cls_loss,reg_los=self.loss(anchors_of_image,predicted_scores[image_index],predicted_offsets[image_index],bboxes[image_index],img_height,img_width)
                     total_cls_loss+= cls_loss
                     total_reg_loss+= reg_los
                     

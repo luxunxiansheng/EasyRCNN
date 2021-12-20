@@ -53,7 +53,7 @@ class AnchorTargetCreator:
         labels_for_valid_anchor.fill_(-1)
 
         
-        argmax_ious_for_valid_anchor, max_ious_for_valid_anchor, argmax_ious_for_gt_box = self._calc_ious(valid_anchors,valid_indices,gt_bboxs)
+        argmax_ious_for_valid_anchor, max_ious_for_valid_anchor, argmax_ious_for_gt_box = self._calc_ious(valid_anchors,gt_bboxs)
         
         # Assign negitive label (0) to all the anchor boxes which have max_iou less than negitive threshold 
         labels_for_valid_anchor[max_ious_for_valid_anchor < self.neg_iou_thresh] = 0
@@ -84,16 +84,16 @@ class AnchorTargetCreator:
         # compute bounding box regression targets
         # Note, we will compute the regression targets for all the anchors inside the image 
         # irrespective of its label. 
-        valid_locs = Utility.bbox2loc(valid_anchors, gt_bboxs[argmax_ious_for_valid_anchor])
+        valid_offsets = Utility.bbox2offset(valid_anchors, gt_bboxs[argmax_ious_for_valid_anchor])
 
         # map up to original set of anchors
         labels = self._unmap(labels_for_valid_anchor, num_anchors_of_img, valid_indices, fill=-1)
-        locs = self._unmap(valid_locs, num_anchors_of_img, valid_indices, fill=0)
+        offsets = self._unmap(valid_offsets, num_anchors_of_img, valid_indices, fill=0)
         
-        return labels,locs 
+        return labels,offsets 
 
         
-    def _calc_ious(self, anchors,anchor_indices,gt_bboxs):
+    def _calc_ious(self, anchors,gt_bboxs):
         # ious between the anchors and the gt boxes
         ious = box_iou(anchors, gt_bboxs)
 

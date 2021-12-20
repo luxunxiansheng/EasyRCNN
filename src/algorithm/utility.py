@@ -4,21 +4,21 @@ from torch.functional import Tensor
 
 class Utility:
     @staticmethod
-    def loc2bbox(src_anchor:Tensor, loc:Tensor) -> Tensor:
+    def offset2bbox(src_anchor:Tensor, offset:Tensor) -> Tensor:
         """Decode bounding boxes from bounding box offsets and scales."""
 
         if src_anchor.shape[0] == 0:
-            return torch.zeros((0, 4), dtype=loc.dtype)
+            return torch.zeros((0, 4), dtype=offset.dtype)
 
         src_height = src_anchor[:, 2] - src_anchor[:, 0]
         src_width =  src_anchor[:, 3] - src_anchor[:, 1]
         src_centor_y = src_anchor[:, 0] + 0.5 * src_height
         src_centor_x = src_anchor[:, 1] + 0.5 * src_width
         
-        dy = loc[:, 0::4]
-        dx = loc[:, 1::4]
-        dh = loc[:, 2::4]
-        dw = loc[:, 3::4]
+        dy = offset[:, 0::4]
+        dx = offset[:, 1::4]
+        dh = offset[:, 2::4]
+        dw = offset[:, 3::4]
     
         dst_centor_y = dy * src_height.unsqueeze(1) + src_centor_y.unsqueeze(1)
         dst_centor_x = dx * src_width.unsqueeze(1) + src_centor_x.unsqueeze(1)
@@ -26,7 +26,7 @@ class Utility:
         dst_h = torch.exp(dh) * src_height.unsqueeze(1)
         dst_w = torch.exp(dw) * src_width.unsqueeze(1)
         
-        dst_bbox = torch.zeros(loc.shape, dtype=loc.dtype,device=loc.device)
+        dst_bbox = torch.zeros(offset.shape, dtype=offset.dtype,device=offset.device)
         dst_bbox[:, 0::4] = dst_centor_y - 0.5 * dst_h
         dst_bbox[:, 1::4] = dst_centor_x - 0.5 * dst_w
         dst_bbox[:, 2::4] = dst_centor_y + 0.5 * dst_h
@@ -35,7 +35,7 @@ class Utility:
         return dst_bbox
 
     @staticmethod
-    def bbox2loc(source_bbox:Tensor, target_bbox:Tensor) -> Tensor:
+    def bbox2offset(source_bbox:Tensor, target_bbox:Tensor) -> Tensor:
         source_roi_height = source_bbox[:, 2] - source_bbox[:, 0]
         source_roi_width  = source_bbox[:, 3] - source_bbox[:, 1]
         source_roi_ctr_y  = source_bbox[:, 0] + 0.5 * source_roi_height
@@ -55,8 +55,8 @@ class Utility:
         dh = torch.log(target_height / source_roi_height)
         dw = torch.log(target_width / source_roi_width)
         
-        loc = torch.vstack((dy, dx, dh, dw)).t()
-        return loc
+        offset = torch.vstack((dy, dx, dh, dw)).t()
+        return offset
 
 
 

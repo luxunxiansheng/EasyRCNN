@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.module import T
 
-from rpn.anchor_creator import AnchorCreator
 from rpn.anchor_target_creator import AnchorTargetCreator
 
 class RPNLoss(nn.Module):
@@ -15,9 +14,9 @@ class RPNLoss(nn.Module):
 
         self.anchor_target_creator = AnchorTargetCreator(config,device=device)
 
-    def forward(self,anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width):
+    def forward(self,anchors_of_img,predicted_scores,predicted_offsets,target_bboxs,img_height,img_width):
         
-        target_labels,target_locs = self.anchor_target_creator.create(anchors_of_img,target_bboxs,img_height,img_width)
+        target_labels,target_offsets = self.anchor_target_creator.create(anchors_of_img,target_bboxs,img_height,img_width)
 
         if target_labels is None:
             return torch.tensor(0.0,device=self.device),torch.tensor(0.0,device=self.device)
@@ -32,29 +31,29 @@ class RPNLoss(nn.Module):
         classification_loss = F.cross_entropy(predicted_scores_keep,target_labels_keep.long(),ignore_index=-1)
 
         #----------------------- regression loss --------------------------#
-        inside_weight = torch.zeros(target_locs.shape,device=self.device)
+        inside_weight = torch.zeros(target_offsets.shape,device=self.device)
 
         # get the positive locs predicted by the network
         inside_weight[(target_labels > 0).view(-1,1).expand_as(inside_weight)] = 1
-        predicted_locs = predicted_locs.permute(1,2,0).contiguous().view(-1,4)
+        predicted_offsets = predicted_offsets.permute(1,2,0).contiguous().view(-1,4)
 
-        predicted_locs = inside_weight * predicted_locs
-        target_locs = inside_weight * target_locs
+        predicted_offsets = inside_weight * predicted_offsets
+        target_offsets = inside_weight * target_offsets
 
         # loc_loss is the sum of the smooth L1 loss of the four coordinates of the positive anchors
-        loc_loss = self._soomth_l1_loss(predicted_locs,target_locs,self.sigma)
+        loc_loss = self._soomth_l1_loss(predicted_offsets,target_offsets,self.sigma)
 
         # Normalize by the number of the  positives
         regression_loss = loc_loss/((target_labels>=0).sum().float())  
 
         return classification_loss,regression_loss
 
-    def compute(self,anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width):
-        return self.forward(anchors_of_img,predicted_scores,predicted_locs,target_bboxs,img_height,img_width)
+    def compute(self,anchors_of_img,predicted_scores,predicted_offsets,target_bboxs,img_height,img_width):
+        return self.forward(anchors_of_img,predicted_scores,predicted_offsets,target_bboxs,img_height,img_width)
     
-    def _soomth_l1_loss(self, predicted_locs, target_locs,sigma):
+    def _soomth_l1_loss(self, predicted_offsets, target_locs,sigma):
         sigma2 = sigma**2
-        diff = predicted_locs - target_locs
+        diff = predicted_offsets - target_locs
         abs_diff = diff.abs()
         flag = (abs_diff.data < (1.0 / sigma2)).float()
         loss = flag * (sigma2 / 2.) * (diff ** 2) +(1 - flag) * (abs_diff - 0.5 / sigma2)

@@ -25,9 +25,9 @@ class RPN(nn.Module):
         
         #-------------------- predict locs ----------------------#
         # [batch_size, num_base_anchors * 4, feature_height,feature_width]
-        predicted_locs = self.bbox_conv(hidden) 
+        predicted_offsets = self.bbox_conv(hidden) 
 
-        return predicted_scores,predicted_locs
+        return predicted_scores,predicted_offsets
 
     def predict(self,features):
         return self.forward(features)

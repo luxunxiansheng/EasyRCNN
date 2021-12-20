@@ -19,7 +19,7 @@ class ProposalCreator:
     def create(self, 
                 anchors_of_image,  # [Num_anchors]
                 predicted_scores,  # [Num_base_anchors*2,feature_h,feature_w]
-                predicted_locs,    # [Num_base_anchors*4,feature_h,feature_w]
+                predicted_offsets,    # [Num_base_anchors*4,feature_h,feature_w]
                 img_height,
                 img_width,
                 feature_height,
@@ -29,10 +29,10 @@ class ProposalCreator:
                 
         #------------------------Locs---------------------------------#
         # [feature_height,feature_width, num_base_anchors * 4]
-        predicted_locs = predicted_locs.permute(1,2,0).contiguous()
+        predicted_offsets = predicted_offsets.permute(1,2,0).contiguous()
         
         # [Num_anchors,4]
-        predicted_locs = predicted_locs.view(-1,4) 
+        predicted_offsets = predicted_offsets.view(-1,4) 
 
         #------------------------Scores---------------------------------#
         # [feature_height,feature_width, num_base_anchors * 2]
@@ -48,7 +48,7 @@ class ProposalCreator:
 
         #------------------------Proposed ROI bboxs---------------------------------#
         # Convert anchors into proposal via bbox transformations.
-        proposed_roi_bboxs = Utility.loc2bbox(anchors_of_image, predicted_locs)
+        proposed_roi_bboxs = Utility.offset2bbox(anchors_of_image, predicted_offsets)
         
         # Clip predicted boxes to image.
         proposed_roi_bboxs[:, slice(0, 4, 2)] = torch.clip(proposed_roi_bboxs[:, slice(0, 4, 2)], 0, img_height)

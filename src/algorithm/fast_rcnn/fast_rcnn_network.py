@@ -15,10 +15,10 @@ class FastRCNN(nn.Module):
         self.fc6 = FCBlock(config.FAST_RCNN.IN_CHANNELS*config.FAST_RCNN.ROI_SIZE*config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.FC7_CHANNELS)
         self.fc7 = FCBlock(config.FAST_RCNN.FC7_CHANNELS, config.FAST_RCNN.FC7_CHANNELS)
         
-        self.loc = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,  (self.n_classes+1) * 4)
+        self.offset = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,  (self.n_classes+1) * 4)
         self.score = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,self.n_classes+1)
 
-        weights_normal_init(self.loc, 0.001)
+        weights_normal_init(self.offset, 0.001)
         weights_normal_init(self.score,0.01)
 
     def forward(self,feature,rois):
@@ -32,9 +32,9 @@ class FastRCNN(nn.Module):
         fc6 = self.fc6(pool)
         fc7 = self.fc7(fc6)
         roi_scores = self.score(fc7)
-        roi_locs = self.loc(fc7)
+        roi_offsets = self.offset(fc7)
 
-        return roi_scores,roi_locs 
+        return roi_scores,roi_offsets 
     
     def predict(self,feature,rois):
         return  self.forward(feature,rois)

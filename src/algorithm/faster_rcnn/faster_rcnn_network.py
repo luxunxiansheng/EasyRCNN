@@ -23,8 +23,8 @@ class FasterRCNN(nn.Module):
         self.n_class = self.fast_rcnn.n_classes
         self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)
-        self.loc_norm_mean = torch.tensor(config.FASTER_RCNN.LOC_NORM_MEAN).to(device)
-        self.loc_norm_std =  torch.tensor(config.FASTER_RCNN.LOC_NORM_STD).to(device)
+        self.offset_norm_mean = torch.tensor(config.FASTER_RCNN.OFFSET_NORM_MEAN).to(device)
+        self.offset_norm_std =  torch.tensor(config.FASTER_RCNN.OFFSET_NORM_STD).to(device)
 
     def predict(self,image_batch):
         return self.forward(image_batch)
@@ -32,7 +32,7 @@ class FasterRCNN(nn.Module):
         
     def forward(self,image_batch):
         feature_batch= self.feature_extractor.predict(image_batch)
-        rpn_predicted_score_batch ,rpn_predicted_loc_batch = self.rpn.predict(feature_batch)
+        rpn_predicted_score_batch ,rpn_predicted_offset_batch = self.rpn.predict(feature_batch)
         
         bboxes_batch = list()
         labels_batch = list()
@@ -43,12 +43,12 @@ class FasterRCNN(nn.Module):
             feature = feature_batch[image_index]
             feature_height,feature_width = feature.shape[1:]
             rpn_predicted_scores = rpn_predicted_score_batch[image_index]
-            rpn_predicted_locs = rpn_predicted_loc_batch[image_index]
+            rpn_predicted_offsets = rpn_predicted_offset_batch[image_index]
 
             anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
             proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,
                                                                 rpn_predicted_scores,
-                                                                rpn_predicted_locs,
+                                                                rpn_predicted_offsets,
                                                                 img_height,
                                                                 img_width,
                                                                 feature_height,
@@ -71,13 +71,13 @@ class FasterRCNN(nn.Module):
     def detect(self, feature, proposed_roi_bboxes,img_height,img_width,score_threshold=0.05,nms_threshold=0.3):
         predicted_roi_score,predicted_roi_loc= self.fast_rcnn.predict(feature,proposed_roi_bboxes)
 
-        mean = self.loc_norm_mean.repeat(self.n_class+1)[None]
-        std  = self.loc_norm_std.repeat(self.n_class+1)[None]
+        mean = self.offset_norm_mean.repeat(self.n_class+1)[None]
+        std  = self.offset_norm_std.repeat(self.n_class+1)[None]
 
         predicted_roi_loc = predicted_roi_loc * std + mean
         
         # post processing 
-        predicted_roi_bboxes = Utility.loc2bbox(proposed_roi_bboxes,predicted_roi_loc)
+        predicted_roi_bboxes = Utility.offset2bbox(proposed_roi_bboxes,predicted_roi_loc)
             
         predicted_roi_bboxes[:,0::2] =(predicted_roi_bboxes[:,0::2]).clamp(min=0,max=img_height)
         predicted_roi_bboxes[:,1::2] =(predicted_roi_bboxes[:,1::2]).clamp(min=0,max=img_width)
