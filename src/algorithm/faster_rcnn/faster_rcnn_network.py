@@ -9,7 +9,7 @@ from feature_extractor import FeatureExtractorFactory
 from rpn.anchor_creator import AnchorCreator
 from rpn.proposal_creator import ProposalCreator
 from rpn.region_proposal_network import RPN
-from utility import Utility
+from location_utility import LocationUtility
 
 class FasterRCNN(nn.Module):
     def __init__(self,config,writer,device='cpu'):
@@ -77,7 +77,7 @@ class FasterRCNN(nn.Module):
         predicted_roi_loc = predicted_roi_loc * std + mean
         
         # post processing 
-        predicted_roi_bboxes = Utility.offset2bbox(proposed_roi_bboxes,predicted_roi_loc)
+        predicted_roi_bboxes = LocationUtility.offset2bbox(proposed_roi_bboxes,predicted_roi_loc)
             
         predicted_roi_bboxes[:,0::2] =(predicted_roi_bboxes[:,0::2]).clamp(min=0,max=img_height)
         predicted_roi_bboxes[:,1::2] =(predicted_roi_bboxes[:,1::2]).clamp(min=0,max=img_width)

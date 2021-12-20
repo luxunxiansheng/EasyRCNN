@@ -28,7 +28,7 @@ from faster_rcnn.faster_rcnn_network import FasterRCNN
 
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
-from utility import Utility
+from location_utility import LocationUtility
 from visual_tool import draw_img_bboxes_labels
 
 IMG    =  torch.randn(1, 3, 800,800).float()
@@ -74,9 +74,9 @@ class TestUtility(unittest.TestCase):
     def test_loc_transform(self):
         src_bbox = torch.tensor([[0, 0, 20, 10], [5, 5, 50, 10]])
         loc = torch.tensor([[0.1, 0.3, 0.8, 0.2], [0.3, 0.7, 0.4, 0.9]])
-        dst_bbox = Utility.offset2bbox(src_bbox, loc)
+        dst_bbox = LocationUtility.offset2bbox(src_bbox, loc)
 
-        locs_back = Utility.bbox2offset(src_bbox, dst_bbox)   
+        locs_back = LocationUtility.bbox2offset(src_bbox, dst_bbox)   
         self.assertTrue(torch.allclose(loc, locs_back))
 
 @unittest.skip("Passed")

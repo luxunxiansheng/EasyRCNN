@@ -1,8 +1,7 @@
 import torch
 from torch.functional import Tensor
 
-
-class Utility:
+class LocationUtility:
     @staticmethod
     def offset2bbox(src_anchor:Tensor, offset:Tensor) -> Tensor:
         """Decode bounding boxes from bounding box offsets and scales."""

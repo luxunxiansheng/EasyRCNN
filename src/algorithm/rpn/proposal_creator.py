@@ -3,7 +3,7 @@ sys.path.append('..')
 
 import torch
 from torchvision.ops import nms
-from utility import Utility
+from location_utility import LocationUtility
 
 class ProposalCreator:
     def __init__(self,config,n_pre_nms=12000,n_post_nms=2000):
@@ -48,7 +48,7 @@ class ProposalCreator:
 
         #------------------------Proposed ROI bboxs---------------------------------#
         # Convert anchors into proposal via bbox transformations.
-        proposed_roi_bboxs = Utility.offset2bbox(anchors_of_image, predicted_offsets)
+        proposed_roi_bboxs = LocationUtility.offset2bbox(anchors_of_image, predicted_offsets)
         
         # Clip predicted boxes to image.
         proposed_roi_bboxs[:, slice(0, 4, 2)] = torch.clip(proposed_roi_bboxs[:, slice(0, 4, 2)], 0, img_height)

@@ -2,7 +2,7 @@ import torch
 from torchvision.ops import nms
 from torchvision.ops import box_iou
 
-from utility import Utility
+from location_utility import LocationUtility
 
 class ProposalTargetCreator(object):
     """Assign ground truth bounding boxes to given RoIs."""
@@ -56,7 +56,7 @@ class ProposalTargetCreator(object):
         gt_bboxes = gt_bboxs[argmax_ious_for_proposed_roi_bboxs[keep_index]]
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
-        gt_roi_offsets = Utility.bbox2offset(sampled_roi, gt_bboxes)
+        gt_roi_offsets = LocationUtility.bbox2offset(sampled_roi, gt_bboxes)
         gt_roi_offsets = (gt_roi_offsets - self.loc_normalize_mean.to(gt_roi_offsets.device)) / self.loc_normalize_std.to(gt_roi_offsets.device)
         return sampled_roi,gt_roi_label,gt_roi_offsets
 

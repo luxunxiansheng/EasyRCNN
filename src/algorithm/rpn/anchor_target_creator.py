@@ -1,6 +1,6 @@
 import torch    
 from torchvision.ops import box_iou
-from utility import Utility
+from location_utility import LocationUtility
 
 class AnchorTargetCreator:
     """Assign the ground truth bounding boxes to anchors."""
@@ -84,7 +84,7 @@ class AnchorTargetCreator:
         # compute bounding box regression targets
         # Note, we will compute the regression targets for all the anchors inside the image 
         # irrespective of its label. 
-        valid_offsets = Utility.bbox2offset(valid_anchors, gt_bboxs[argmax_ious_for_valid_anchor])
+        valid_offsets = LocationUtility.bbox2offset(valid_anchors, gt_bboxs[argmax_ious_for_valid_anchor])
 
         # map up to original set of anchors
         labels = self._unmap(labels_for_valid_anchor, num_anchors_of_img, valid_indices, fill=-1)
