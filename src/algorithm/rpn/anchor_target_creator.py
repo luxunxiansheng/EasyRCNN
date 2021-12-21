@@ -152,13 +152,13 @@ class AnchorTargetCreator:
         """Unmap a subset of item (data) back to the original set of items (of size count)
         
         Args:
-            data: (N,M) tensor, the subset of data to unmap.
+            data: (N,) tensor, the subset of data to unmap.
             count: int, the size of the original set of items.
             index: (N,) tensor, the indices of the subset of data to unmap.
             fill: the value to fill the unmapped item with.
         
         Returns:
-            data: (count,M) tensor, the original set of items.
+            ret: (count,) or (count,4) tensor, the original set of items.
         """
 
         if len(data.shape) == 1:

@@ -4,8 +4,8 @@ from location_utility import LocationUtility
 
 class ProposalCreator:
     def __init__(self,config):
-        self.n_pre_nms = config.PROPOSAL_CREATOR.N_PRE_NMS
-        self.n_post_nms= config.PROPOSAL_CREATOR.N_POST_NMS
+        self.n_pre_nms = config.RPN.PROPOSAL_CREATOR.N_PRE_NMS
+        self.n_post_nms= config.RPN.PROPOSAL_CREATOR.N_POST_NMS
                 
         self.nms_thresh = config.RPN.PROPOSAL_CREATOR.NMS_THRESHOLD
         self.min_size =   config.RPN.PROPOSAL_CREATOR.MIN_SIZE

@@ -10,7 +10,7 @@ _C = ConfigNode()
 
 # ----------------------- TEST ----------------------------------------------------#
 _C.TEST = ConfigNode()
-_C.TEST.TEMP_DIR = '/media/yan/D/ornot/workspace/object_detection/test/temp'
+
 
 # ----------------------- LOG ----------------------------------------------------- #
 _C.LOG = ConfigNode()
@@ -103,7 +103,7 @@ _C.FASTER_RCNN.TRAIN.WEIGHT_DECAY = 0.0005
 _C.FASTER_RCNN.TRAIN.LEARNING_RATE = 0.001
 _C.FASTER_RCNN.TRAIN.MOMENTUM = 0.9
 _C.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY = 0.1
-_C.FASTER_RCNN.TRAIN.NUM_WORKERS = 8
+_C.FASTER_RCNN.TRAIN.NUM_WORKERS = 2
 _C.FASTER_RCNN.TRAIN.RESUME = False
 _C.FASTER_RCNN.TRAIN.PRETRAINED_MODEL_PATH = None
 _C.FASTER_RCNN.TRAIN.CHECK_FREQUENCY = 100
@@ -116,12 +116,15 @@ def get_default_config():
     """
     return _C.clone()
 
-def combine_configs(cfg_path):
+def combine_configs(cfg_path1, cfg_path2=None):
     # Priority 3: get default configs
     cfg = get_default_config()    
 
     # Priority 2: merge from yaml config
-    if cfg_path is not None and os.path.exists(cfg_path):
-        cfg.merge_from_file(cfg_path)
+    if cfg_path1 is not None and os.path.exists(cfg_path1):
+        cfg.merge_from_file(cfg_path1)
+    
+    if cfg_path2 is not None and os.path.exists(cfg_path2):
+        cfg.merge_from_file(cfg_path2)
 
     return cfg

@@ -1,0 +1,4 @@
+RPN:
+    PROPOSAL_CREATOR:
+        N_PRE_NMS: 6000
+        N_POST_NMS: 300

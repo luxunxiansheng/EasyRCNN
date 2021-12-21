@@ -1,9 +1,11 @@
-from torch.types import Device
-from torch.utils.data.dataset import Dataset
-from torch.utils.tensorboard.writer import SummaryWriter
+
 from tqdm import tqdm
 
+from torch.utils.data.dataset import Dataset
+from torch.utils.tensorboard.writer import SummaryWriter
+
 import torch
+from torch.types import Device
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
 from torchmetrics.detection.map import MAP
@@ -22,7 +24,7 @@ class FasterRCNNTrainer:
                 config:CfgNode,
                 dataset:Dataset,
                 writer:SummaryWriter,
-                device:Device=Device('cpu')) -> None:
+                device:Device='cpu') -> None:
 
         self.config = config
         self.writer = writer

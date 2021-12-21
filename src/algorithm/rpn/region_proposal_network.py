@@ -23,7 +23,7 @@ class RPN(nn.Module):
             features: (N, C, H, W)
 
         Returns:
-            scores: (N, num_base_anchors, H, W)
+            scores: (N, num_base_anchors*2, H, W)
             bboxs: (N, num_base_anchors*4, H, W)
         """
         # [batch_size, middle_channels, feature_height, feature_width]

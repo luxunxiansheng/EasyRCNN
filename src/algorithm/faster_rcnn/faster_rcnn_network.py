@@ -96,7 +96,28 @@ class FasterRCNN(nn.Module):
             
         return bboxes_batch,labels_batch,scores_batch
 
-    def detect(self, feature, proposed_roi_bboxes,img_height,img_width,score_threshold=0.05,nms_threshold=0.3):
+    def detect(self, 
+                feature:torch.Tensor, 
+                proposed_roi_bboxes:torch.Tensor,
+                img_height:int,
+                img_width:int,
+                score_threshold:float,
+                nms_threshold:float):
+        """
+        Args:
+            feature (torch.Tensor): [C,H,W]
+            proposed_roi_bboxes (torch.Tensor): [n_bboxes,4]
+            img_height (int): height of image
+            img_width (int): width of image
+            score_threshold (float): threshold for score
+            nms_threshold (float): threshold for nms
+
+        Returns:
+            bboxes (torch.Tensor): [n_bboxes,4]
+            labels (torch.Tensor): [n_bboxes,]
+            scores (torch.Tensor): [n_bboxes,]
+        """
+
         predicted_roi_score,predicted_roi_loc= self.fast_rcnn.predict(feature,proposed_roi_bboxes)
 
         mean = self.offset_norm_mean.repeat(self.n_class+1)[None]
