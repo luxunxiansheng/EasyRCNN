@@ -13,6 +13,8 @@ def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int 
             ``best_model.ckpt``
         max_keep (int): Specifies the max amount of checkpoints to keep
     """
+    ensure_dir(save_path)
+
     # save checkpoint
     torch.save(state, save_path)
 

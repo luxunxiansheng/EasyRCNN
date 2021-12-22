@@ -95,7 +95,14 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
         self.feature_channels = feature_channels
 
         self.model = vgg16(pretrained=True)
-        self.feature_layer = nn.Sequential(*list(self.model.features)[:30])
+
+        feature_layer = list(self.model.features)[:30]
+        # freeze top4 conv
+        for layer in feature_layer[:10]:
+            for p in layer.parameters():
+                p.requires_grad = False 
+                
+        self.feature_layer = nn.Sequential(*feature_layer)
     
     def predict(self,im_data:torch.Tensor)->torch.Tensor:
         """
