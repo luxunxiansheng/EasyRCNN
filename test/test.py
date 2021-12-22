@@ -299,5 +299,5 @@ class TestFasterRCNNTrainer(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    print("Running RPN test:")
+    print("Running Faster_RCNN test:")
     unittest.main()
