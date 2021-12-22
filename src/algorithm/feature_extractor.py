@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchvision.models import vgg16
 
 from common import CNNBlock
 
@@ -75,11 +76,54 @@ class VGG16FeatureExtractor(nn.Module):
             p.requires_grad = requires_grad
 
 
+class PretrainedVGG16FeatureExtractor(nn.Module):
+    def __init__(self, 
+                img_channels:int =3, 
+                feature_channels:int =512, 
+                bn:bool=False):
+        """
+            Args:
+                img_channels (int): number of channels of input image
+                feature_channels (int): number of channels of feature maps
+                bn (bool): whether to use batch normalization
+        
+        """
+
+        super().__init__()
+        
+        self.img_channels =  img_channels
+        self.feature_channels = feature_channels
+
+        self.model = vgg16(pretrained=True)
+        self.feature_layer = nn.Sequential(*list(self.model.features)[:30])
+    
+    def predict(self,im_data:torch.Tensor)->torch.Tensor:
+        """
+            A explicit function to predict the feature maps by calling forward function.        
+        """
+
+        return self.forward(im_data)
+
+    def forward(self, im_data:torch.Tensor)->torch.Tensor:
+        """extract feature maps
+
+        Args:
+            im_data (torch.Tensor): shape = (batch_size, img_channel, img_size, img_size)
+
+        Returns:
+            torch.Tensor: shape = (batch_size, feature_channels, feature_height, feature_width)
+        """                
+        x = self.feature_layer(im_data)
+        return x
+        
+
 class FeatureExtractorFactory:
     @staticmethod
     def create_feature_extractor(feature_extractor_type: str, **kwargs) -> torch.nn.Module:
         if feature_extractor_type == 'vgg16':
             return VGG16FeatureExtractor(**kwargs)
+        elif feature_extractor_type == 'pretrained_vgg16':
+            return PretrainedVGG16FeatureExtractor(**kwargs)
         else:
             raise ValueError('Unknown feature extractor type: {}'.format(feature_extractor_type))
         

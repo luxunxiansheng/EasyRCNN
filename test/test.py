@@ -45,7 +45,7 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-config_path = work_folder+'src/config/train/experiments/exp02_config.yaml'
+config_path = work_folder+'src/config/train/experiments/exp03_config.yaml'
 config = combine_configs(config_path)
 
 @unittest.skip("passed")
@@ -126,15 +126,17 @@ class TestProposalCreator(unittest.TestCase):
 class TestFeatureExtractor(unittest.TestCase):
     def setUp(self) -> None:
         self.factory = FeatureExtractorFactory()
-        
+    
+    @unittest.skip("passed")
     def test_vgg16_extractor(self):
-        extractor = self.factory.create_feature_extractor('vgg16')
-        self.assertTrue(isinstance(extractor, VGG16FeatureExtractor))
-
-    def test_vgg16_extractor_forward(self):
         extractor = self.factory.create_feature_extractor('vgg16')
         features = extractor.predict(IMG)
         self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))   
+
+    def test_pretrained_vgg16_extractor(self):
+        extractor = self.factory.create_feature_extractor('pretrained_vgg16')
+        features = extractor.predict(IMG)
+        self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))
 
 
 @unittest.skip('passed')
