@@ -13,7 +13,7 @@ import unittest
 import torch
 from config import combine_configs
 from voc_dataset import VOCDataset
-from feature_extractor import FeatureExtractorFactory, VGG16FeatureExtractor
+from feature_extractor import FeatureExtractorFactory
 from rpn.anchor_creator import AnchorCreator
 from rpn.anchor_target_creator import AnchorTargetCreator
 from rpn.proposal_creator import ProposalCreator
@@ -183,7 +183,7 @@ class TestVOCDataset(unittest.TestCase):
         print(self.voc_dataset.__len__())
         
         samples = 1
-        imgs=torch.zeros([samples,3,500,500])       
+        imgs=torch.zeros([samples,3,800,800])       
         for i in range(samples):
             image,bboxes,lables,diff,img_file= self.voc_dataset[1430]
             print(image.shape)

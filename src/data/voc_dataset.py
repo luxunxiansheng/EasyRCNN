@@ -5,6 +5,7 @@ import torch
 import torch.utils.data as data
 from torchvision.io import read_image
 
+
 class VOCDataset(data.Dataset):
 
     VOC_BBOX_LABEL_NAMES = (
@@ -42,6 +43,8 @@ class VOCDataset(data.Dataset):
                 self.ids.append(line.strip())
 
         self.label_names = VOCDataset.VOC_BBOX_LABEL_NAMES
+
+        
     
     def get_label_names(self):
         return self.label_names

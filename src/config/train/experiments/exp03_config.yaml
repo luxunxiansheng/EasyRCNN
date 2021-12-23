@@ -1,4 +1,6 @@
 FASTER_RCNN:
+  FEATRUE_EXTRACTOR: 'pretrained_vgg16'
+  
   TRAIN:
     CHECK_FREQUENCY: 1000
     EPOCHS: 500

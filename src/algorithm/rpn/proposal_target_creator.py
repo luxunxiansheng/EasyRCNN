@@ -28,10 +28,8 @@ class ProposalTargetCreator(object):
 
             Returns:
                 sampled_proposals: (n_sampled, 4) tensor.
-        """
-        
-        
-        n_positive_roi_per_image = int(self.n_sample * self.positive_ratio)
+        """                
+        n_positive_roi = int(self.n_sample * self.positive_ratio)
 
         proposed_roi_bboxs = torch.concat((proposed_roi_bboxs, gt_bboxs),dim=0)
 
@@ -42,24 +40,23 @@ class ProposalTargetCreator(object):
 
         # Select foreground RoIs as those with >= pos_iou_thresh IoU.
         positive_index = torch.where(max_ious_for_proposed_roi_bboxs >= self.positive_iou_thresh)[0]
-        n_positive_roi_per_image = int(min(n_positive_roi_per_image, len(positive_index)))
-        if len(positive_index) > 0:
-            selected_positive_index = torch.multinomial(positive_index.float(),num_samples=n_positive_roi_per_image, replacement=False)
-            positive_index = positive_index[selected_positive_index]
+        n_positive_roi = int(min(n_positive_roi, len(positive_index)))
+        if len(positive_index) > 1:
+            selected_positive_index = torch.multinomial(positive_index.float(),num_samples=n_positive_roi, replacement=False)
+            positive_index = positive_index[selected_positive_index]        
 
-        # Select background RoIs as those within
-        # [neg_iou_thresh_lo, neg_iou_thresh_hi).
+        # Select background RoIs as those within [neg_iou_thresh_lo, neg_iou_thresh_hi).
         negative_index = torch.where((max_ious_for_proposed_roi_bboxs < self.negative_iou_thresh_hi) &(max_ious_for_proposed_roi_bboxs >= self.negative_iou_thresh_lo))[0]
-        n_negative_rois_per_image = self.n_sample - n_positive_roi_per_image
-        n_negative_rois_per_image = int(min(n_negative_rois_per_image,len(negative_index)))
-        if len(negative_index) > 0:
-            selected_negative_index = torch.multinomial(negative_index.float(), num_samples=n_negative_rois_per_image, replacement=False)
+        n_negative_rois = self.n_sample - n_positive_roi
+        n_negative_rois = int(min(n_negative_rois,len(negative_index)))
+        if len(negative_index) > 1:
+            selected_negative_index = torch.multinomial(negative_index.float(), num_samples=n_negative_rois, replacement=False)
             negative_index = negative_index[selected_negative_index]
-
+        
         # The indices that we're selecting (both positive and negative).
         keep_index = torch.concat((positive_index,negative_index),dim=0)
         gt_roi_label = gt_roi_label[keep_index]
-        gt_roi_label[n_positive_roi_per_image:] = 0  # negative labels --> 0
+        gt_roi_label[n_positive_roi:] = 0  # negative labels --> 0
         sampled_roi = proposed_roi_bboxs[keep_index]
         gt_bboxes = gt_bboxs[argmax_ious_for_proposed_roi_bboxs[keep_index]]
 

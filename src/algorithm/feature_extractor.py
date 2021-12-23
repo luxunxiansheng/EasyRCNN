@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision.models import vgg16
+from torchvision import transforms as T
 
 from common import CNNBlock
 
@@ -77,10 +78,7 @@ class VGG16FeatureExtractor(nn.Module):
 
 
 class PretrainedVGG16FeatureExtractor(nn.Module):
-    def __init__(self, 
-                img_channels:int =3, 
-                feature_channels:int =512, 
-                bn:bool=False):
+    def __init__(self):
         """
             Args:
                 img_channels (int): number of channels of input image
@@ -91,12 +89,13 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
 
         super().__init__()
         
-        self.img_channels =  img_channels
-        self.feature_channels = feature_channels
-
         self.model = vgg16(pretrained=True)
 
         feature_layer = list(self.model.features)[:30]
+
+        assert feature_layer[0].in_channels == 3
+        assert feature_layer[28].out_channels == 512
+
         # freeze top4 conv
         for layer in feature_layer[:10]:
             for p in layer.parameters():
@@ -119,7 +118,9 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
 
         Returns:
             torch.Tensor: shape = (batch_size, feature_channels, feature_height, feature_width)
-        """                
+        """         
+        transform=T.Compose([T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])    
+        im_data = transform(im_data/255.0)
         x = self.feature_layer(im_data)
         return x
         
