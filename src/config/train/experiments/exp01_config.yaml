@@ -7,6 +7,9 @@ FASTER_RCNN:
     PRETRAINED_MODEL_PATH: None
     RESUME: False
 
+VOC_DATASET:
+  AUGMENTED: True
+
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/model_checkpoint.ckpt'
 
