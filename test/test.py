@@ -45,7 +45,7 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-config_path = work_folder+'src/config/train/experiments/exp03_config.yaml'
+config_path = work_folder+'src/config/train/experiments/exp01_config.yaml'
 config = combine_configs(config_path)
 
 @unittest.skip("passed")
@@ -168,7 +168,7 @@ class TestRPNLoss(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-@unittest.skip('passed')
+unittest.skip('passed')
 class TestVOCDataset(unittest.TestCase):
     def setUp(self) -> None:
         self.voc_dataset = VOCDataset(config)
@@ -183,7 +183,7 @@ class TestVOCDataset(unittest.TestCase):
         print(self.voc_dataset.__len__())
         
         samples = 1
-        imgs=torch.zeros([samples,3,800,800])       
+        imgs=torch.zeros([samples,3,96,500])       
         for i in range(samples):
             image,bboxes,lables,diff,img_file= self.voc_dataset[1430]
             print(image.shape)
@@ -286,7 +286,7 @@ class TestFasterRCNN(unittest.TestCase):
     def test_forward(self):
         bboxes,labels,scores = self.faster_rcnn.predict(IMG)
 
-unittest.skip('passed')    
+@unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
