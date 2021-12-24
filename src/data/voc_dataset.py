@@ -1,5 +1,6 @@
 import os
 import xml.etree.ElementTree as ET
+from albumentations.pytorch.transforms import ToTensor
 
 import torch
 import torch.utils.data as data
@@ -38,6 +39,7 @@ class VOCDataset(data.Dataset):
     def __init__(self, 
                 config,
                 split='trainval',
+                augumented=False,
                 ):
         self.data_dir = config.VOC_DATASET.DATA_DIR
         self.use_difficult = config.VOC_DATASET.USE_DIFFICULT_LABEL
@@ -48,12 +50,14 @@ class VOCDataset(data.Dataset):
 
         self.label_names = VOCDataset.VOC_BBOX_LABEL_NAMES
 
+        self.augmented = augumented
+
         self.transforms = A.Compose([A.HorizontalFlip(p=0.6),
                                     A.VerticalFlip(p=0.3),
-                                    ToTensorV2(),],
+                                    ],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
-                                
+        self.toTensor = ToTensorV2()
     
     def get_label_names(self):
         return self.label_names
@@ -83,14 +87,18 @@ class VOCDataset(data.Dataset):
         image = cv2.imread(image_file)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        transformed = self.transforms(image=image, bboxes=bboxes, category_id=category_id)    
+        if self.augmented:
+            augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
+            image = augmented['image']
+            bboxes = augmented['bboxes']
+            category_id = augmented['category_id']
         
         # HWC->CHW
-        image = transformed['image']
+        image = self.toTensor(image=image)['image']
         
         # convert from xyxy to yxyx 
-        bboxes = torch.tensor(transformed['bboxes'],dtype=torch.float32).index_select(dim=1, index=torch.tensor([1,0,3,2]))     
-        category_id = torch.tensor(transformed['category_id'],dtype=torch.long)
+        bboxes = torch.tensor(bboxes,dtype=torch.float32).index_select(dim=1, index=torch.tensor([1,0,3,2]))     
+        category_id = torch.tensor(category_id,dtype=torch.long)
         difficult = torch.tensor(difficult, dtype=torch.uint8)
         
         return image, bboxes,category_id, difficult,image_file

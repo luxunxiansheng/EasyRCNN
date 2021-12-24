@@ -68,7 +68,6 @@ class FasterRCNNTrainer:
                 
                 with torch.autograd.set_detect_anomaly(True): 
                     features_batch = self.feature_extractor.predict(images_batch.float())
-
                     rpn_predicted_scores_batch, rpn_predicted_offset_batch = self.rpn.predict(features_batch)
                 
                 total_rpn_cls_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
@@ -115,6 +114,7 @@ class FasterRCNNTrainer:
                                                                                             )
                     with torch.autograd.set_detect_anomaly(True): 
                         predicted_roi_cls_score,predicted_roi_offset = self.fast_rcnn.predict(feature,sampled_roi)
+                    
                     roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_roi_cls_score,
                                                                     predicted_roi_offset,
                                                                     gt_roi_label,
@@ -124,7 +124,11 @@ class FasterRCNNTrainer:
                     total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
 
                 with torch.autograd.set_detect_anomaly(True): 
-                    total_loss = total_rpn_cls_loss + total_rpn_reg_loss+total_roi_cls_loss+total_roi_reg_loss
+                    total_loss = self.config.FASTER_RCNN.TRAIN.RPN_CLS_LOSS_WEIGHT*total_rpn_cls_loss + \
+                                self.config.FASTER_RCNN.TRAIN.RPN_REG_LOSS_WEIGHT*total_rpn_reg_loss+ \
+                                self.config.FASTER_RCNN.TRAIN.ROI_CLS_LOSS_WEIGHT*total_roi_cls_loss+ \
+                                self.config.FASTER_RCNN.TRAIN.ROI_REG_LOSS_WEIGHT*total_roi_reg_loss
+                                
                     self.optimizer.zero_grad()
                     total_loss.backward()                    
                     self.optimizer.step()

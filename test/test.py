@@ -171,7 +171,7 @@ class TestRPNLoss(unittest.TestCase):
 unittest.skip('passed')
 class TestVOCDataset(unittest.TestCase):
     def setUp(self) -> None:
-        self.voc_dataset = VOCDataset(config)
+        self.voc_dataset = VOCDataset(config,augumented=True)
         self.writer = SummaryWriter(config.LOG.LOG_DIR)
 
     def tearDown(self) -> None:
