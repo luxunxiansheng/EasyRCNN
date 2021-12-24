@@ -24,6 +24,7 @@ _C.CHECKPOINT.CHECKPOINT_PATH = '/media/yan/D/ornot/workspace/object_detection/c
 _C.VOC_DATASET = ConfigNode()
 _C.VOC_DATASET.DATA_DIR ='/home/yan/data/VOCdevkit/VOC2007'
 _C.VOC_DATASET.USE_DIFFICULT_LABEL = False
+_C.VOC_DATASET.AUGMENTED = False
 
 # -------------------------- RPN ---------------------------------------------------#
 _C.RPN = ConfigNode()

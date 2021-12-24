@@ -38,8 +38,7 @@ class VOCDataset(data.Dataset):
     
     def __init__(self, 
                 config,
-                split='trainval',
-                augumented=False,
+                split='trainval',                
                 ):
         self.data_dir = config.VOC_DATASET.DATA_DIR
         self.use_difficult = config.VOC_DATASET.USE_DIFFICULT_LABEL
@@ -50,11 +49,11 @@ class VOCDataset(data.Dataset):
 
         self.label_names = VOCDataset.VOC_BBOX_LABEL_NAMES
 
-        self.augmented = augumented
+        self.augmented = config.VOC_DATASET.AUGMENTED
 
         self.transforms = A.Compose([A.HorizontalFlip(p=0.6),
                                     A.VerticalFlip(p=0.3),
-                                    ],
+                                    A.RandomBrightnessContrast(p=0.2)],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
         self.toTensor = ToTensorV2()
