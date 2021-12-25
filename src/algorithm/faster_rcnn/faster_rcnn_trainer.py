@@ -63,7 +63,9 @@ class FasterRCNNTrainer:
         total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
         for epoch in tqdm(range(start_epoch,self.epoches)):
             for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.dataloader)):
+                
             
+
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
                 with torch.autograd.set_detect_anomaly(True): 
@@ -139,8 +141,8 @@ class FasterRCNNTrainer:
                     self.writer.add_scalar('roi/cls_loss',total_roi_cls_loss.item(),steps)
                     self.writer.add_scalar('roi/reg_loss',total_roi_reg_loss.item(),steps)
                     self.writer.add_scalar('total_loss',total_loss.item(),steps)
-                    self.writer.add_histogram('rpn/conv1',self.rpn.conv1.conv.weight,steps)
-                    self.writer.add_histogram('roi/fc7',self.fast_rcnn.fc7.fc.weight,steps)
+                    self.writer.add_histogram('rpn/score',self.rpn.score_conv.conv.weight,steps)
+                    self.writer.add_histogram('roi/score',self.fast_rcnn.score.weight,steps)
 
                     with torch.no_grad():
                         predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())

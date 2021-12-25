@@ -76,7 +76,7 @@ class VOCDataset(data.Dataset):
                 continue
             difficult.append(int(obj.find('difficult').text))
             boundingbox_annotation = obj.find('bndbox')
-            # subtract 1 to make pixel indexes 0-based
+            # subtract 1 to make pixel indexes 0-based and with format xyxy
             bboxes.append([int(boundingbox_annotation.find(tag).text) - 1 for tag in ('xmin', 'ymin', 'xmax', 'ymax')])
             name = obj.find('name').text.lower().strip()
             category_id.append(VOCDataset.VOC_BBOX_LABEL_NAMES.index(name))
@@ -92,8 +92,9 @@ class VOCDataset(data.Dataset):
             bboxes = augmented['bboxes']
             category_id = augmented['category_id']
         
-        # HWC->CHW
+        # HWC->CHW  
         image = self.toTensor(image=image)['image']
+
         
         # convert from xyxy to yxyx 
         bboxes = torch.tensor(bboxes,dtype=torch.float32).index_select(dim=1, index=torch.tensor([1,0,3,2]))     
