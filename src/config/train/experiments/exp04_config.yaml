@@ -13,7 +13,7 @@ FASTER_RCNN:
     ROI_REG_LOSS_WEIGHT: 1.0
 
 VOC_DATASET:
-  AUGMENTED: True
+  AUGMENTED: False
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/model_checkpoint.ckpt'

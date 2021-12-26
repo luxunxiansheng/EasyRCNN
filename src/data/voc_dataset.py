@@ -79,9 +79,7 @@ class VOCDataset(data.Dataset):
 
         self.augmented = config.VOC_DATASET.AUGMENTED
 
-        self.transforms = A.Compose([A.HorizontalFlip(p=0.6),
-                                    A.VerticalFlip(p=0.3),
-                                    A.RandomBrightnessContrast(p=0.2)],
+        self.transforms = A.Compose([A.HorizontalFlip(p=0.5),],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
         self.toTensor = ToTensorV2()
