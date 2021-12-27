@@ -70,15 +70,15 @@ class FasterRCNNTrainer:
         self.rpn_loss  = RPNLoss(config,device)   
         self.fast_rcnn_loss = FastRCNNLoss(config,device)
 
-        self.learning_rate = float(config.FASTER_RCNN.TRAIN.LEARNING_RATE)
-        self.learning_rate_decay = config.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY
-
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
-        self.optimizer = optim.SGD(params=params,lr=self.learing_rate,
-                                    momentum=float(config.FASTER_RCNN.TRAIN.MOMENTUM),
+        self.optimizer = optim.SGD( params=params,
+                                    lr=config.FASTER_RCNN.TRAIN.LEARNING_RATE,
+                                    momentum=config.FASTER_RCNN.TRAIN.MOMENTUM,
                                     weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
         
-        self.scheduler = StepLR(self.optimizer,step_size=config.FASTER_RCNN.TRAIN.STEP_SIZE,gamma=self.learning_rate_decay)
+        self.scheduler = StepLR(self.optimizer,
+                                step_size=config.FASTER_RCNN.TRAIN.STEP_SIZE,
+                                gamma=config.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY)
         
         self.resume = config.FASTER_RCNN.TRAIN.RESUME
         self.checkpoint_path = config.CHECKPOINT.CHECKPOINT_PATH
@@ -164,7 +164,6 @@ class FasterRCNNTrainer:
                     self.optimizer.zero_grad()
                     total_loss.backward()                    
                     self.optimizer.step()
-                    self.scheduler.step()
 
                 if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
@@ -172,7 +171,7 @@ class FasterRCNNTrainer:
                     self.writer.add_scalar('roi/cls_loss',total_roi_cls_loss.item(),steps)
                     self.writer.add_scalar('roi/reg_loss',total_roi_reg_loss.item(),steps)
                     self.writer.add_scalar('total_loss',total_loss.item(),steps)
-
+                    self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 
                     with torch.no_grad():
                         predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
@@ -204,8 +203,8 @@ class FasterRCNNTrainer:
 
                             predicted_scores_for_img_0 = predicted_scores_batch[0]
                             map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
-                            self.writer.add_scalar('mAP',map['map'].item(),steps)
-                            self.writer.add_scalar('mAP_50',map['map_50'].item(),steps)
+                            self.writer.add_scalar('map',map['map'].item(),steps)
+                            self.writer.add_scalar('map_50',map['map_50'].item(),steps)
                 
                     # save checkpoint if needed
                     cpkt = {
@@ -218,8 +217,9 @@ class FasterRCNNTrainer:
                             }
                     
                     save_checkpoint(cpkt, self.checkpoint_path)
-
+                
                 steps += 1
+            self.scheduler.step()
 
     def _resume(self):
         ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
