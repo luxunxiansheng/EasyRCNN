@@ -24,7 +24,6 @@
 # #### END LICENSE BLOCK #####
 # /
 
-
 from tqdm import tqdm
 
 from torch.utils.data.dataset import Dataset
@@ -44,7 +43,6 @@ from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
 from checkpoint_tool import  load_checkpoint, save_checkpoint
-
 
 class FasterRCNNTrainer:
     def __init__(self,
@@ -202,7 +200,7 @@ class FasterRCNNTrainer:
                             self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
                             predicted_scores_for_img_0 = predicted_scores_batch[0]
-                            map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                            map =self.evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
                             self.writer.add_scalar('map',map['map'].item(),steps)
                             self.writer.add_scalar('map_50',map['map_50'].item(),steps)
                 
@@ -231,7 +229,7 @@ class FasterRCNNTrainer:
         steps = ckpt['steps']
         return steps,start_epoch
 
-    def _evaluate(self, 
+    def evaluate(self, 
                 gt_bboxes:torch.Tensor, 
                 gt_labels:torch.Tensor, 
                 predicted_scores:torch.Tensor, 
@@ -279,6 +277,4 @@ class FasterRCNNTrainer:
 
         self.metric.update(preds,target)
         return self.metric.compute()
-        
-
         
