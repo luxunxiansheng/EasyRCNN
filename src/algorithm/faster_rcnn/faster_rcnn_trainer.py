@@ -172,8 +172,7 @@ class FasterRCNNTrainer:
                     self.writer.add_scalar('roi/cls_loss',total_roi_cls_loss.item(),steps)
                     self.writer.add_scalar('roi/reg_loss',total_roi_reg_loss.item(),steps)
                     self.writer.add_scalar('total_loss',total_loss.item(),steps)
-                    self.writer.add_histogram('rpn/score',self.rpn.score_conv.conv.weight,steps)
-                    self.writer.add_histogram('roi/score',self.fast_rcnn.score.weight,steps)
+
 
                     with torch.no_grad():
                         predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
@@ -205,7 +204,8 @@ class FasterRCNNTrainer:
 
                             predicted_scores_for_img_0 = predicted_scores_batch[0]
                             map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
-                            self.writer.add_scalar('map',map,steps)
+                            self.writer.add_scalar('mAP',map['map'].item(),steps)
+                            self.writer.add_scalar('mAP_50',map['map_50'].item(),steps)
                 
                     # save checkpoint if needed
                     cpkt = {
@@ -246,7 +246,22 @@ class FasterRCNNTrainer:
             predicted_bboxes: (N,4)
 
         Returns:
-            map: float
+            dict containing
+
+            - map: ``torch.Tensor``
+            - map_50: ``torch.Tensor``
+            - map_75: ``torch.Tensor``
+            - map_small: ``torch.Tensor``
+            - map_medium: ``torch.Tensor``
+            - map_large: ``torch.Tensor``
+            - mar_1: ``torch.Tensor``
+            - mar_10: ``torch.Tensor``
+            - mar_100: ``torch.Tensor``
+            - mar_small: ``torch.Tensor``
+            - mar_medium: ``torch.Tensor``
+            - mar_large: ``torch.Tensor``
+            - map_per_class: ``torch.Tensor`` (-1 if class metrics are disabled)
+            - mar_100_per_class: ``torch.Tensor`` (-1 if class metrics are disabled)
 
         """
 
@@ -263,7 +278,7 @@ class FasterRCNNTrainer:
                     )]  
 
         self.metric.update(preds,target)
-        return self.metric.compute()['map'].item()
+        return self.metric.compute()
         
 
         

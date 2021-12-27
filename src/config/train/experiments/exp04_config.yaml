@@ -10,7 +10,7 @@ FASTER_RCNN:
 
 
 VOC_DATASET:
-  AUGMENTED: True
+  AUGMENTED: False
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/model_checkpoint.ckpt'
