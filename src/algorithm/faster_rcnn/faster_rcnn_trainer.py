@@ -57,7 +57,7 @@ class FasterRCNNTrainer:
         self.device = device
         self.epoches = config.FASTER_RCNN.TRAIN.EPOCHS
 
-        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.RPN.TRAIN.NUM_WORKERS)    
+        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.FASTER_RCNN.TRAIN.NUM_WORKERS)    
         self.faster_rcnn = FasterRCNN(config,device)
         self.feature_extractor = self.faster_rcnn.feature_extractor
         self.rpn = self.faster_rcnn.rpn
@@ -276,14 +276,14 @@ class FasterRCNNTrainer:
 
         preds = [dict(
                     # convert yxyx to xyxy
-                    boxes = predicted_bboxes.index_select(1,torch.tensor([1,0,3,2],device=predicted_bboxes.device)),
-                    scores = predicted_scores,
-                    labels = predicted_labels,
+                    boxes = predicted_bboxes.cpu().index_select(1,torch.tensor([1,0,3,2])),
+                    scores = predicted_scores.cpu(),
+                    labels = predicted_labels.cpu(),
                     )]
         
         target = [dict(
-                    boxes = gt_bboxes.index_select(1,torch.tensor([1,0,3,2],device=gt_bboxes.device)),
-                    labels = gt_labels,
+                    boxes = gt_bboxes.cpu().index_select(1,torch.tensor([1,0,3,2])),
+                    labels = gt_labels.cpu(),
                     )]  
 
         self.metric.update(preds,target)
