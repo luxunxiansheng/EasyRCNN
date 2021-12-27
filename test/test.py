@@ -27,6 +27,7 @@
 
 import os
 import sys
+from datetime import datetime
 
 current_dir= os.path.dirname(os.path.realpath(__file__))
 work_folder=current_dir[:current_dir.find('test')]
@@ -72,7 +73,7 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-config_path = work_folder+'src/config/train/experiments/exp04_config.yaml'
+config_path = work_folder+'src/config/train/experiments/exp01_config.yaml'
 config = combine_configs(config_path)
 
 @unittest.skip("passed")
@@ -317,7 +318,7 @@ unittest.skip('passed')
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
-        self.writer = SummaryWriter(config.LOG.LOG_DIR)
+        self.writer = SummaryWriter(config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.trainer = FasterRCNNTrainer(config,self.voc_dataset,writer=self.writer,device=device)
         

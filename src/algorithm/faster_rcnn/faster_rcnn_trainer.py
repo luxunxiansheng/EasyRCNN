@@ -69,10 +69,15 @@ class FasterRCNNTrainer:
         self.rpn_loss  = RPNLoss(config,device)   
         self.fast_rcnn_loss = FastRCNNLoss(config,device)
 
+        self.learning_rate = float(config.FASTER_RCNN.TRAIN.LEARNING_RATE)
+        self.learning_rate_decay = config.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY
+
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
-        self.optimizer = optim.SGD(params=params,lr=float(config.FASTER_RCNN.TRAIN.LEARNING_RATE),
+        self.optimizer = optim.SGD(params=params,lr=self.learing_rate,
                                     momentum=float(config.FASTER_RCNN.TRAIN.MOMENTUM),
                                     weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
+        
+        
         
         self.resume = config.FASTER_RCNN.TRAIN.RESUME
         self.checkpoint_path = config.CHECKPOINT.CHECKPOINT_PATH
@@ -152,10 +157,10 @@ class FasterRCNNTrainer:
                     total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
 
                 with torch.autograd.set_detect_anomaly(True): 
-                    total_loss = self.config.FASTER_RCNN.TRAIN.RPN_CLS_LOSS_WEIGHT*total_rpn_cls_loss + \
-                                self.config.FASTER_RCNN.TRAIN.RPN_REG_LOSS_WEIGHT*total_rpn_reg_loss+ \
-                                self.config.FASTER_RCNN.TRAIN.ROI_CLS_LOSS_WEIGHT*total_roi_cls_loss+ \
-                                self.config.FASTER_RCNN.TRAIN.ROI_REG_LOSS_WEIGHT*total_roi_reg_loss
+                    total_loss = total_rpn_cls_loss + \
+                                total_rpn_reg_loss+ \
+                                total_roi_cls_loss+ \
+                                total_roi_reg_loss
                                 
                     self.optimizer.zero_grad()
                     total_loss.backward()                    

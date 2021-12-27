@@ -7,13 +7,10 @@ FASTER_RCNN:
     NUM_WORKERS: 2
     PRETRAINED_MODEL_PATH: None
     RESUME: False
-    RPN_CLS_LOSS_WEIGHT: 1.0
-    RPN_REG_LOSS_WEIGHT: 1.0
-    ROI_CLS_LOSS_WEIGHT: 1.0
-    ROI_REG_LOSS_WEIGHT: 1.0
+
 
 VOC_DATASET:
-  AUGMENTED: False
+  AUGMENTED: True
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/model_checkpoint.ckpt'
