@@ -33,6 +33,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 import torch
 from torch.types import Device
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data.dataloader import DataLoader
 from torchmetrics.detection.map import MAP
 from yacs.config import CfgNode 
@@ -77,7 +78,7 @@ class FasterRCNNTrainer:
                                     momentum=float(config.FASTER_RCNN.TRAIN.MOMENTUM),
                                     weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
         
-        
+        self.scheduler = StepLR(self.optimizer,step_size=config.FASTER_RCNN.TRAIN.STEP_SIZE,gamma=self.learning_rate_decay)
         
         self.resume = config.FASTER_RCNN.TRAIN.RESUME
         self.checkpoint_path = config.CHECKPOINT.CHECKPOINT_PATH
@@ -94,8 +95,6 @@ class FasterRCNNTrainer:
         total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
         for epoch in tqdm(range(start_epoch,self.epoches)):
             for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.dataloader)):
-                
-            
 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
@@ -165,6 +164,7 @@ class FasterRCNNTrainer:
                     self.optimizer.zero_grad()
                     total_loss.backward()                    
                     self.optimizer.step()
+                    self.scheduler.step()
 
                 if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
