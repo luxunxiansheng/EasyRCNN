@@ -44,12 +44,10 @@ from location_utility import LocationUtility
 class FasterRCNN(nn.Module):
     def __init__(self,
                 config:CfgNode,
-                writer:SummaryWriter,
                 device:Device='cpu'):
 
         super().__init__()
         self.config = config
-        self.writer = writer
         self.device = device
         self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.FASTER_RCNN.FEATRUE_EXTRACTOR).to(device)
         self.rpn = RPN(config).to(device)

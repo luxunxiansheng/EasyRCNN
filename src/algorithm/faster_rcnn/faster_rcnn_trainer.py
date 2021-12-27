@@ -172,7 +172,7 @@ class FasterRCNNTrainer:
                     self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 
                     with torch.no_grad():
-                        predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn(images_batch.float())
+                        predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn.predict(images_batch.float())
                         
                         predicted_labels_for_img_0 = predicted_labels_batch[0]
                         predicted_label_names_for_img_0 = []
@@ -200,7 +200,7 @@ class FasterRCNNTrainer:
                             self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
                             predicted_scores_for_img_0 = predicted_scores_batch[0]
-                            map =self.evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                            map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
                             self.writer.add_scalar('map',map['map'].item(),steps)
                             self.writer.add_scalar('map_50',map['map_50'].item(),steps)
                 
@@ -229,7 +229,7 @@ class FasterRCNNTrainer:
         steps = ckpt['steps']
         return steps,start_epoch
 
-    def evaluate(self, 
+    def _evaluate(self, 
                 gt_bboxes:torch.Tensor, 
                 gt_labels:torch.Tensor, 
                 predicted_scores:torch.Tensor, 

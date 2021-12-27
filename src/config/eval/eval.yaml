@@ -2,3 +2,12 @@ RPN:
     PROPOSAL_CREATOR:
         N_PRE_NMS: 6000
         N_POST_NMS: 300
+
+FASTER_RCNN:
+    FEATRUE_EXTRACTOR: 'pretrained_vgg16'
+
+CHECKPOINT:
+    CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/model_checkpoint.ckpt'
+
+LOG:
+    LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp04'
