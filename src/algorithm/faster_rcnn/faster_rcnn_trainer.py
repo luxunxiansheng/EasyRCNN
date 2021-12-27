@@ -57,7 +57,7 @@ class FasterRCNNTrainer:
         self.epoches = config.FASTER_RCNN.TRAIN.EPOCHS
 
         self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.RPN.TRAIN.NUM_WORKERS)    
-        self.faster_rcnn = FasterRCNN(config,writer,device)
+        self.faster_rcnn = FasterRCNN(config,device)
         self.feature_extractor = self.faster_rcnn.feature_extractor
         self.rpn = self.faster_rcnn.rpn
         self.fast_rcnn = self.faster_rcnn.fast_rcnn
