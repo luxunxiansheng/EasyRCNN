@@ -27,6 +27,8 @@
 import sys
 import os
 
+
+
 work_folder= os.path.dirname(os.path.realpath(__file__))
 sys.path.append(work_folder+'/src/algorithm')
 sys.path.append(work_folder+'/src/config')
@@ -35,16 +37,29 @@ sys.path.append(work_folder+'/src/tool')
 
 import torch
 from faster_rcnn.faster_rcnn_evaluator import FasterRCNNEvaluator
+from faster_rcnn.faster_rcnn_network import FasterRCNN
 from voc_dataset import VOCDataset
-
 from config import combine_configs
+from checkpoint_tool import load_checkpoint
 
-if __name__=="__main__":
+
+def test():
     config_path = work_folder+'/src/config/eval/eval.yaml'
     config = combine_configs(config_path)
     voc_dataset = VOCDataset(config,split='test')
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    evaluator = FasterRCNNEvaluator(config,voc_dataset,device)
+    faster_rcnn = FasterRCNN(config,device)
+
+    ckpt = load_checkpoint(config.CHECKPOINT.CHECKPOINT_PATH)
+    faster_rcnn.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
+    faster_rcnn.rpn.load_state_dict(ckpt['rpn_model'])
+    faster_rcnn.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model']) 
+
+    evaluator = FasterRCNNEvaluator(config,voc_dataset,faster_rcnn,device)
     map = evaluator.evaluate()
+    return map
+
+if __name__=="__main__":
+    map = test()
     print("map:{}".format(map['map'].item()))
     print("map_50:{}".format(map['map_50'].item()))

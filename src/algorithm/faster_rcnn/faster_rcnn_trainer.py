@@ -43,6 +43,7 @@ from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
 from checkpoint_tool import  load_checkpoint, save_checkpoint
+from eval import test
 
 class FasterRCNNTrainer:
     def __init__(self,
@@ -210,6 +211,10 @@ class FasterRCNNTrainer:
                 map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
                 self.writer.add_scalar('map',map['map'].item(),steps)
                 self.writer.add_scalar('map_50',map['map_50'].item(),steps)
+        
+        """ eval_map = test()
+        self.writer.add_scalar('eval_map_50',eval_map['map_50'].item(),steps) """
+
 
     def _resume(self):
         ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint

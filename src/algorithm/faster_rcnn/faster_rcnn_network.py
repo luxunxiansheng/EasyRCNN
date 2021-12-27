@@ -112,8 +112,8 @@ class FasterRCNN(nn.Module):
                                                 proposed_roi_bboxes, 
                                                 img_height, 
                                                 img_width,
-                                                self.config.FASTER_RCNN.VISUAL_SCORE_THRESHOLD,
-                                                self.config.FASTER_RCNN.VISUAL_NMS_THRESHOLD)
+                                                self.config.FASTER_RCNN.SCORE_THRESHOLD,
+                                                self.config.FASTER_RCNN.NMS_THRESHOLD)
             
             bboxes_batch.append(bboxes)
             labels_batch.append(labels)

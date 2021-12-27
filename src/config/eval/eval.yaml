@@ -5,7 +5,7 @@ RPN:
 
 FASTER_RCNN:
     FEATRUE_EXTRACTOR: 'pretrained_vgg16'
-
+    SCORE_THRESHOLD : 0.03
 CHECKPOINT:
     CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/model_checkpoint.ckpt'
 

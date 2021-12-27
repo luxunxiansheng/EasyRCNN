@@ -34,24 +34,19 @@ from torchmetrics.detection.map import MAP
 from yacs.config import CfgNode 
 
 from faster_rcnn.faster_rcnn_network import FasterRCNN
-from checkpoint_tool import  load_checkpoint
 
 class FasterRCNNEvaluator(object):
     def __init__(self,
                 config:CfgNode,
                 dataset:Dataset,
+                faster_rcnn:FasterRCNN,
                 device:Device='cpu') -> None:
 
         self.config = config
         self.device = device
         
-        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=2)    
-        self.faster_rcnn = FasterRCNN(config,device)
-
-        ckpt = load_checkpoint(config.CHECKPOINT.CHECKPOINT_PATH)
-        self.faster_rcnn.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
-        self.faster_rcnn.rpn.load_state_dict(ckpt['rpn_model'])
-        self.faster_rcnn.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model'])
+        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=8)    
+        self.faster_rcnn = faster_rcnn
         
         self.metric = MAP()
 
