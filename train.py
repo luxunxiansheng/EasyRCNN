@@ -42,6 +42,7 @@ from faster_rcnn.faster_rcnn_trainer import FasterRCNNTrainer
 from config import combine_configs
 
 if __name__=="__main__":
+    torch.manual_seed(0)
     config_path = work_folder+'/src/config/train/experiments/exp04_config.yaml'
     config = combine_configs(config_path)
     voc_dataset = VOCDataset(config)

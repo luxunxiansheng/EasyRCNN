@@ -44,6 +44,8 @@ from checkpoint_tool import load_checkpoint
 
 
 def test():
+    torch.manual_seed(0)
+    
     config_path = work_folder+'/src/config/eval/eval.yaml'
     config = combine_configs(config_path)
     voc_dataset = VOCDataset(config,split='test')

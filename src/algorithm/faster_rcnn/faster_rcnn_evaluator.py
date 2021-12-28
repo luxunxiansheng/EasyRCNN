@@ -45,7 +45,7 @@ class FasterRCNNEvaluator(object):
         self.config = config
         self.device = device
         
-        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=8)    
+        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=False,num_workers=8)    
         self.faster_rcnn = faster_rcnn
         
         self.metric = MAP()

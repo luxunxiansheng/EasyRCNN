@@ -166,10 +166,12 @@ class FasterRCNNTrainer:
 
                 if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch, total_rpn_cls_loss, total_rpn_reg_loss, total_roi_cls_loss, total_roi_reg_loss, img_height, img_width, gt_bboxes, gt_labels)
-                    self._save_checkpoint(epoch,steps)
+                    
                 steps += 1
-
+            self._save_checkpoint_per_epoch(epoch,steps)
             self.scheduler.step()
+            
+            
 
     def _check_progress(self, steps, total_loss, images_batch, bboxes_batch, labels_batch, total_rpn_cls_loss, total_rpn_reg_loss, total_roi_cls_loss, total_roi_reg_loss, img_height, img_width, gt_bboxes, gt_labels):
         self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
@@ -211,10 +213,6 @@ class FasterRCNNTrainer:
                 map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
                 self.writer.add_scalar('map',map['map'].item(),steps)
                 self.writer.add_scalar('map_50',map['map_50'].item(),steps)
-        
-        """ eval_map = test()
-        self.writer.add_scalar('eval_map_50',eval_map['map_50'].item(),steps) """
-
 
     def _resume(self):
         ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
@@ -227,7 +225,7 @@ class FasterRCNNTrainer:
         steps = ckpt['steps']
         return steps,start_epoch
     
-    def _save_checkpoint(self,epoch,steps):
+    def _save_checkpoint_per_epoch(self,epoch,steps):
         cpkt = {
                 'feature_extractor_model':self.feature_extractor.state_dict(),
                 'rpn_model': self.rpn.state_dict(),
