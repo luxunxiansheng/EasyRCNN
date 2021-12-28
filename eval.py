@@ -52,7 +52,7 @@ def test():
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     faster_rcnn = FasterRCNN(config,device)
 
-    ckpt = load_checkpoint(config.CHECKPOINT.CHECKPOINT_PATH)
+    ckpt = load_checkpoint(config.CHECKPOINT.CHECKPOINT_PATH,load_best=True)
     faster_rcnn.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
     faster_rcnn.rpn.load_state_dict(ckpt['rpn_model'])
     faster_rcnn.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model']) 

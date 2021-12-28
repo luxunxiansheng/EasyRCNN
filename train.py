@@ -54,10 +54,10 @@ if __name__=="__main__":
     writer = SummaryWriter(train_config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     trainer = FasterRCNNTrainer(train_config,
-                                eval_config,
                                 train_voc_dataset,
+                                writer,
+                                eval_config,
                                 eval_voc_dataset,
-                                writer=writer,
                                 device=device)
     trainer.train()
     writer.flush()

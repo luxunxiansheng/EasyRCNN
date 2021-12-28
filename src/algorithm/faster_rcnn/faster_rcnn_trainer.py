@@ -48,10 +48,10 @@ from checkpoint_tool import  load_checkpoint, save_checkpoint
 class FasterRCNNTrainer:
     def __init__(self,
                 train_config:CfgNode,
-                eval_config:CfgNode,
                 train_dataset:Dataset,
-                eval_dataset:Dataset,
                 writer:SummaryWriter,
+                eval_config:CfgNode = None,
+                eval_dataset:Dataset= None,
                 device:Device='cpu') -> None:
 
         self.train_config = train_config
@@ -82,9 +82,12 @@ class FasterRCNNTrainer:
 
         self.resume = train_config.FASTER_RCNN.TRAIN.RESUME
         self.checkpoint_path = train_config.CHECKPOINT.CHECKPOINT_PATH
-        self.best_model_path = train_config.CHECKPOINT.BEST_MODEL_PATH
-
-        self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,self.faster_rcnn,device)
+        
+        
+        if eval_config is not None:
+            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,device)
+        else:
+            self.evaluator = None
 
     def train(self):
         steps = 0 
@@ -176,14 +179,15 @@ class FasterRCNNTrainer:
             self.scheduler.step()  
             
             # evaluate the model on test set for current epoch    
-            eval_result = self._evaluate_on_test_set(epoch)
-            self.writer.add_scalar('eval/map_50',eval_result['map_50'],steps)
-
-            # is the best model so far?
             is_best = False
-            if eval_result['map_50'] > self.best_map_50:
-                is_best = True
-                self.best_map_50 = eval_result['map_50']
+            if self.evaluator is not None:
+                eval_result =self.evaluator.evaluate()
+                self.writer.add_scalar('eval/map_50',eval_result['map_50'],steps)
+
+                # is the best model so far?
+                if eval_result['map_50'] > self.best_map_50:
+                    is_best = True
+                    self.best_map_50 = eval_result['map_50']
 
             # save a checkpoint for current epoch. If it is better than the best model so far, save it as the best model
             self._save_checkpoint_per_epoch(epoch,steps,is_best)  
@@ -317,7 +321,6 @@ class FasterRCNNTrainer:
         self.metric.update(preds,target)
         return self.metric.compute()
 
-    def _evaluate_on_test_set(self,epoch):
-        return self.evaluator.evaluate()
+
 
 
