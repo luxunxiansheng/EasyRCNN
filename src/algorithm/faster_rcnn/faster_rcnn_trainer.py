@@ -35,7 +35,8 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data.dataloader import DataLoader
 from torchmetrics.detection.map import MAP
-from yacs.config import CfgNode 
+from yacs.config import CfgNode
+from faster_rcnn.faster_rcnn_evaluator import FasterRCNNEvaluator 
 
 from faster_rcnn.faster_rcnn_network import FasterRCNN
 from rpn.proposal_target_creator import ProposalTargetCreator
@@ -43,46 +44,47 @@ from rpn.region_proposal_network_loss import RPNLoss
 from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
 from checkpoint_tool import  load_checkpoint, save_checkpoint
-from eval import test
 
 class FasterRCNNTrainer:
     def __init__(self,
-                config:CfgNode,
-                dataset:Dataset,
+                train_config:CfgNode,
+                eval_config:CfgNode,
+                train_dataset:Dataset,
+                eval_dataset:Dataset,
                 writer:SummaryWriter,
                 device:Device='cpu') -> None:
 
-        self.config = config
+        self.train_config = train_config
+        self.eval_config = eval_config
         self.writer = writer
         self.device = device
-        self.epoches = config.FASTER_RCNN.TRAIN.EPOCHS
-
-        self.dataloader = DataLoader(dataset,batch_size=1,shuffle=True,num_workers=config.FASTER_RCNN.TRAIN.NUM_WORKERS)    
-        self.faster_rcnn = FasterRCNN(config,device)
+        self.epoches = train_config.FASTER_RCNN.TRAIN.EPOCHS
+        self.train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=True,num_workers=train_config.FASTER_RCNN.NUM_WORKERS)    
+        self.faster_rcnn = FasterRCNN(train_config,device)
         self.feature_extractor = self.faster_rcnn.feature_extractor
         self.rpn = self.faster_rcnn.rpn
         self.fast_rcnn = self.faster_rcnn.fast_rcnn
         self.anchor_creator = self.faster_rcnn.anchor_creator
         self.proposal_creator = self.faster_rcnn.proposal_creator
-
-        self.proposal_target_creator = ProposalTargetCreator(config)
-        self.rpn_loss  = RPNLoss(config,device)   
-        self.fast_rcnn_loss = FastRCNNLoss(config,device)
+        self.proposal_target_creator = ProposalTargetCreator(train_config)
+        self.rpn_loss  = RPNLoss(train_config,device)   
+        self.fast_rcnn_loss = FastRCNNLoss(train_config,device)
 
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
         self.optimizer = optim.SGD( params=params,
-                                    lr=config.FASTER_RCNN.TRAIN.LEARNING_RATE,
-                                    momentum=config.FASTER_RCNN.TRAIN.MOMENTUM,
-                                    weight_decay=config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
-        
+                                    lr=train_config.FASTER_RCNN.TRAIN.LEARNING_RATE,
+                                    momentum=train_config.FASTER_RCNN.TRAIN.MOMENTUM,
+                                    weight_decay=train_config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
         self.scheduler = StepLR(self.optimizer,
-                                step_size=config.FASTER_RCNN.TRAIN.STEP_SIZE,
-                                gamma=config.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY)
-        
-        self.resume = config.FASTER_RCNN.TRAIN.RESUME
-        self.checkpoint_path = config.CHECKPOINT.CHECKPOINT_PATH
-        
+                                step_size=train_config.FASTER_RCNN.TRAIN.STEP_SIZE,
+                                gamma=train_config.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY)
         self.metric = MAP()
+
+        self.resume = train_config.FASTER_RCNN.TRAIN.RESUME
+        self.checkpoint_path = train_config.CHECKPOINT.CHECKPOINT_PATH
+        self.best_model_path = train_config.CHECKPOINT.BEST_MODEL_PATH
+
+        self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,self.faster_rcnn,device)
 
     def train(self):
         steps = 0 
@@ -93,7 +95,8 @@ class FasterRCNNTrainer:
 
         total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
         for epoch in tqdm(range(start_epoch,self.epoches)):
-            for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.dataloader)):
+            # train the model for current epoch
+            for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.train_dataloader)):
 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
@@ -164,16 +167,42 @@ class FasterRCNNTrainer:
                     total_loss.backward()                    
                     self.optimizer.step()
 
-                if steps%self.config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
+                if steps%self.train_config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch, total_rpn_cls_loss, total_rpn_reg_loss, total_roi_cls_loss, total_roi_reg_loss, img_height, img_width, gt_bboxes, gt_labels)
                     
                 steps += 1
-            self._save_checkpoint_per_epoch(epoch,steps)
-            self.scheduler.step()
             
+            # adjust the learning rate if necessary
+            self.scheduler.step()  
             
+            # evaluate the model on test set for current epoch    
+            eval_result = self._evaluate_on_test_set(epoch)
+            self.writer.add_scalar('eval/map_50',eval_result['map_50'],steps)
 
-    def _check_progress(self, steps, total_loss, images_batch, bboxes_batch, labels_batch, total_rpn_cls_loss, total_rpn_reg_loss, total_roi_cls_loss, total_roi_reg_loss, img_height, img_width, gt_bboxes, gt_labels):
+            # is the best model so far?
+            is_best = False
+            if eval_result['map_50'] > self.best_map_50:
+                is_best = True
+                self.best_map_50 = eval_result['map_50']
+
+            # save a checkpoint for current epoch. If it is better than the best model so far, save it as the best model
+            self._save_checkpoint_per_epoch(epoch,steps,is_best)  
+
+    def _check_progress(self, 
+                        steps, 
+                        total_loss,
+                        images_batch,
+                        bboxes_batch,
+                        labels_batch,
+                        total_rpn_cls_loss,
+                        total_rpn_reg_loss,
+                        total_roi_cls_loss,
+                        total_roi_reg_loss,
+                        img_height,
+                        img_width,
+                        gt_bboxes,
+                        gt_labels):
+
         self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
         self.writer.add_scalar('rpn/reg_loss',total_rpn_reg_loss.item(),steps)
         self.writer.add_scalar('roi/cls_loss',total_roi_cls_loss.item(),steps)
@@ -187,10 +216,10 @@ class FasterRCNNTrainer:
             predicted_labels_for_img_0 = predicted_labels_batch[0]
             predicted_label_names_for_img_0 = []
             for label_index in predicted_labels_for_img_0:
-                predicted_label_names_for_img_0.append(self.dataloader.dataset.get_label_names()[label_index.long().item()])
+                predicted_label_names_for_img_0.append(self.train_dataloader.dataset.get_label_names()[label_index.long().item()])
 
             if len(predicted_label_names_for_img_0) >0:
-                label_names = [self.dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
+                label_names = [self.train_dataloader.dataset.get_label_names()[label_index] for label_index in labels_batch[0]] 
                 img_and_gt_bboxes = draw_img_bboxes_labels(images_batch[0],
                                                                         bboxes_batch[0],
                                                                         label_names, 
@@ -210,7 +239,7 @@ class FasterRCNNTrainer:
                 self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
                 predicted_scores_for_img_0 = predicted_scores_batch[0]
-                map =self._evaluate(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                map =self._evaluate_on_train_set(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
                 self.writer.add_scalar('map',map['map'].item(),steps)
                 self.writer.add_scalar('map_50',map['map_50'].item(),steps)
 
@@ -225,7 +254,7 @@ class FasterRCNNTrainer:
         steps = ckpt['steps']
         return steps,start_epoch
     
-    def _save_checkpoint_per_epoch(self,epoch,steps):
+    def _save_checkpoint_per_epoch(self,epoch,steps,is_best):
         cpkt = {
                 'feature_extractor_model':self.feature_extractor.state_dict(),
                 'rpn_model': self.rpn.state_dict(),
@@ -236,15 +265,17 @@ class FasterRCNNTrainer:
                 'scheduler': self.scheduler.state_dict()
                 }
         
-        save_checkpoint(cpkt, self.checkpoint_path)
+        save_checkpoint(cpkt, self.checkpoint_path, is_best=is_best)
 
-    def _evaluate(self, 
+    def _evaluate_on_train_set(self, 
                 gt_bboxes:torch.Tensor, 
                 gt_labels:torch.Tensor, 
                 predicted_scores:torch.Tensor, 
                 predicted_labels:torch.Tensor,
                 predicted_bboxes:torch.Tensor)->float:
         """
+        Evaluate the model on one single train image .
+
         Args:
             gt_bboxes: (N,4)
             gt_labels: (N,)
@@ -271,7 +302,6 @@ class FasterRCNNTrainer:
             - mar_100_per_class: ``torch.Tensor`` (-1 if class metrics are disabled)
 
         """
-
         preds = [dict(
                     # convert yxyx to xyxy
                     boxes = predicted_bboxes.cpu().index_select(1,torch.tensor([1,0,3,2])),
@@ -286,4 +316,8 @@ class FasterRCNNTrainer:
 
         self.metric.update(preds,target)
         return self.metric.compute()
-        
+
+    def _evaluate_on_test_set(self,epoch):
+        return self.evaluator.evaluate()
+
+

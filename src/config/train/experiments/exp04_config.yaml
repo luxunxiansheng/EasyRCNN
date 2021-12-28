@@ -15,7 +15,7 @@ VOC_DATASET:
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/model_checkpoint.ckpt'
-
+  
 LOG:
   LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp04'
 
