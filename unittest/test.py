@@ -75,13 +75,13 @@ ROI_SIZE = 7
 config_path = work_folder+'src/config/train/experiments/unittest_config.yaml'
 config = combine_configs(config_path)
 
-unittest.skip("passed")
+@unittest.skip("passed")
 class TestConfig(unittest.TestCase):
     def test_get_default_config(self) -> None:        
         print(config)
     
 
-unittest.skip("Passed")
+@unittest.skip("Passed")
 class TestAnchorCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.achor_creator = AnchorCreator(config)
@@ -96,7 +96,7 @@ class TestAnchorCreator(unittest.TestCase):
         print(anchors.shape)
         print(anchors)
 
-unittest.skip("Passed")
+@unittest.skip("Passed")
 class TestUtility(unittest.TestCase):
     def test_loc_transform(self):
         src_bbox = torch.tensor([[0, 0, 20, 10], [5, 5, 50, 10]])
@@ -106,7 +106,7 @@ class TestUtility(unittest.TestCase):
         locs_back = LocationUtility.bbox2offset(src_bbox, dst_bbox)   
         self.assertTrue(torch.allclose(loc, locs_back))
 
-unittest.skip("Passed")
+@unittest.skip("Passed")
 class TestAnchorTargetCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.anchor_creator = AnchorCreator(config)
@@ -135,7 +135,7 @@ class TestAnchorTargetCreator(unittest.TestCase):
             self.assertEqual(locs.shape, torch.Size([FEATURE_WIDTH*FEATURE_HEIGHT*9, 4]))
             self.assertEqual(lables.shape, torch.Size([FEATURE_WIDTH*FEATURE_HEIGHT*9]))
     
-unittest.skip("Passed")
+@unittest.skip("Passed")
 class TestProposalCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor("vgg16")
@@ -149,7 +149,7 @@ class TestProposalCreator(unittest.TestCase):
         roi = self.proposal_creator.create(anchors_of_img, predcited_scores[0], predcited_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(roi.shape)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestFeatureExtractor(unittest.TestCase):
     def setUp(self) -> None:
         self.factory = FeatureExtractorFactory()
@@ -166,7 +166,7 @@ class TestFeatureExtractor(unittest.TestCase):
         self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))
 
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestRPN(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor= FeatureExtractorFactory().create_feature_extractor('vgg16')
@@ -220,13 +220,13 @@ class TestVOCDataset(unittest.TestCase):
             print(img_file)
             
             lable_names = [VOCDataset.VOC_BBOX_LABEL_NAMES[i] for i in lables]
-            img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=bboxes,labels=lable_names)
+            img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=bboxes,labels=lable_names,resize_shape=(96,500))
             imgs[i,:,:,:] = img_and_bbox
 
         self.writer.add_images('image',imgs,) 
 
 
-unittest.skip('tested')
+@unittest.skip('tested')
 class TestProposalCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor('vgg16')
@@ -241,7 +241,7 @@ class TestProposalCreator(unittest.TestCase):
         proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,predicted_scores[0],predicted_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(proposed_roi_bboxes.shape)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestProposalTargetCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor('vgg16')
@@ -260,7 +260,7 @@ class TestProposalTargetCreator(unittest.TestCase):
         print(gt_roi_loc.shape)
         print(gt_roi_label)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestFastRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor('vgg16')
@@ -294,7 +294,7 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.faster_rcnn = FasterRCNN(config)
@@ -302,7 +302,7 @@ class TestFasterRCNN(unittest.TestCase):
     def test_forward(self):
         bboxes,labels,scores = self.faster_rcnn.predict(IMG)
 
-unittest.skip('passed')    
+@unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
