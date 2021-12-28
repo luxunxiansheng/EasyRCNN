@@ -39,18 +39,21 @@ class FasterRCNNEvaluator(object):
     def __init__(self,
                 config:CfgNode,
                 dataset:Dataset,
-                faster_rcnn:FasterRCNN,
                 device:Device='cpu') -> None:
 
         self.config = config
         self.device = device
         
         self.dataloader = DataLoader(dataset,batch_size=1,shuffle=False,num_workers=8)    
-        self.faster_rcnn = faster_rcnn
-        
+        self.faster_rcnn = FasterRCNN(config,device)
+
         self.metric = MAP()
 
-    def evaluate(self):
+    def evaluate(self,faster_rcnn):
+        self.faster_rcnn.feature_extractor.load_state_dict(faster_rcnn.feature_extractor.state_dict())
+        self.faster_rcnn.rpn.load_state_dict(faster_rcnn.rpn.state_dict())
+        self.faster_rcnn.fast_rcnn.load_state_dict(faster_rcnn.fast_rcnn.state_dict())
+        
         preds = list()
         target = list()
         
