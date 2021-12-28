@@ -85,7 +85,8 @@ class FasterRCNNTrainer:
         
         
         if eval_config is not None:
-            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,device)
+            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,self.faster_rcnn,device)
+            self.best_map_50 = 0
         else:
             self.evaluator = None
 
@@ -182,12 +183,12 @@ class FasterRCNNTrainer:
             is_best = False
             if self.evaluator is not None:
                 eval_result =self.evaluator.evaluate()
-                self.writer.add_scalar('eval/map_50',eval_result['map_50'],steps)
+                self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
                 # is the best model so far?
-                if eval_result['map_50'] > self.best_map_50:
+                if eval_result['map_50'].item() > self.best_map_50:
                     is_best = True
-                    self.best_map_50 = eval_result['map_50']
+                    self.best_map_50 = eval_result['map_50'].item()
 
             # save a checkpoint for current epoch. If it is better than the best model so far, save it as the best model
             self._save_checkpoint_per_epoch(epoch,steps,is_best)  
