@@ -43,12 +43,22 @@ from config import combine_configs
 
 if __name__=="__main__":
     torch.manual_seed(0)
-    config_path = work_folder+'/src/config/train/experiments/exp04_config.yaml'
-    config = combine_configs(config_path)
-    voc_dataset = VOCDataset(config)
-    writer = SummaryWriter(config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    train_config_path = work_folder+'/src/config/train/experiments/exp01_config.yaml'
+    train_config = combine_configs(train_config_path)
+    train_voc_dataset = VOCDataset(train_config)
+    
+    eval_config_path = work_folder+'/src/config/eval/eval.yaml'
+    eval_config = combine_configs(eval_config_path)
+    eval_voc_dataset = VOCDataset(eval_config)
+
+    writer = SummaryWriter(train_config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    trainer = FasterRCNNTrainer(config,voc_dataset,writer=writer,device=device)
+    trainer = FasterRCNNTrainer(train_config,
+                                eval_config,
+                                train_voc_dataset,
+                                eval_voc_dataset,
+                                writer=writer,
+                                device=device)
     trainer.train()
     writer.flush()
     writer.close()

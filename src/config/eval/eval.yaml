@@ -8,7 +8,7 @@ FASTER_RCNN:
     SCORE_THRESHOLD : 0.03
     NUM_WORKERS : 8
 CHECKPOINT:
-    CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp04/best_model.ckpt'
+    CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/best_model.ckpt'
 
 LOG:
-    LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp04'
+    LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp01'

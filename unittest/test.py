@@ -73,7 +73,7 @@ IN_CHANNEL = 4096
 NUM_CLASSES = 21
 ROI_SIZE = 7
 
-config_path = work_folder+'src/config/train/experiments/exp04_config.yaml'
+config_path = work_folder+'src/config/train/experiments/exp01_config.yaml'
 config = combine_configs(config_path)
 
 @unittest.skip("passed")
