@@ -183,6 +183,7 @@ class FasterRCNNTrainer:
             is_best = False
             if self.evaluator is not None:
                 eval_result =self.evaluator.evaluate()
+                self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
                 # is the best model so far?
@@ -245,8 +246,8 @@ class FasterRCNNTrainer:
 
                 predicted_scores_for_img_0 = predicted_scores_batch[0]
                 map =self._evaluate_on_train_set(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
-                self.writer.add_scalar('map',map['map'].item(),steps)
-                self.writer.add_scalar('map_50',map['map_50'].item(),steps)
+                self.writer.add_scalar('train/map',map['map'].item(),steps)
+                self.writer.add_scalar('train/map_50',map['map_50'].item(),steps)
 
     def _resume(self):
         ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint

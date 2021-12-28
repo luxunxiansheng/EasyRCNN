@@ -29,6 +29,8 @@ import os
 import sys
 from datetime import datetime
 
+
+
 current_dir= os.path.dirname(os.path.realpath(__file__))
 work_folder=current_dir[:current_dir.find('unittest')]
 sys.path.append(work_folder+'src/algorithm')
@@ -52,6 +54,7 @@ from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from fast_rcnn.fast_rcnn_network import FastRCNN
 from faster_rcnn.faster_rcnn_trainer import FasterRCNNTrainer
 from faster_rcnn.faster_rcnn_network import FasterRCNN
+from checkpoint_tool import load_checkpoint, save_checkpoint
 
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
@@ -85,11 +88,9 @@ class TestConfig(unittest.TestCase):
 class TestAnchorCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.achor_creator = AnchorCreator(config)
-    
-    
+
     def test_anchor_base(self):
         self.assertEqual(self.achor_creator.anchor_base.shape,torch.Size([9, 4]))
-    
     
     def test_anchor_creation(self):
         anchors = self.achor_creator.create(2,4)
@@ -179,7 +180,7 @@ class TestRPN(unittest.TestCase):
         self.assertEqual(predicted_scores.shape, torch.Size([1, 18,50,50]))
         self.assertEqual(predicted_locs.shape,   torch.Size([1, 36,50,50]))
         
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestRPNLoss(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor= FeatureExtractorFactory().create_feature_extractor('vgg16')
@@ -195,7 +196,7 @@ class TestRPNLoss(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestVOCDataset(unittest.TestCase):
     def setUp(self) -> None:
         self.voc_dataset = VOCDataset(config)
@@ -313,6 +314,23 @@ class TestFasterRCNNTrainer(unittest.TestCase):
     def test_train(self):
         self.trainer.train()
 
+
+class TestCheckPointTool(unittest.TestCase):
+    def setUp(self):
+        pass
+    
+    def test_save(self):
+        cpkt = {
+                'feature_extractor_model':2,
+    
+                }
+        
+        save_checkpoint(cpkt,config.CHECKPOINT.CHECKPOINT_PATH,True)
+    
+    def test_load(self):
+        cpkt = load_checkpoint(config.CHECKPOINT.CHECKPOINT_PATH)
+        print(cpkt)
+        
 
 if __name__ == "__main__":
     print("Running Faster_RCNN test:")

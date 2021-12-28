@@ -49,7 +49,7 @@ if __name__=="__main__":
     
     eval_config_path = work_folder+'/src/config/eval/eval.yaml'
     eval_config = combine_configs(eval_config_path)
-    eval_voc_dataset = VOCDataset(eval_config)
+    eval_voc_dataset = VOCDataset(eval_config,split='test')
 
     writer = SummaryWriter(train_config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

@@ -51,13 +51,13 @@ def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int 
     save_dir = os.path.dirname(save_path)
     list_path = os.path.join(save_dir, 'latest_checkpoint.txt')
 
-    save_path = os.path.basename(save_path)
+    save_path_ = os.path.basename(save_path)
     if os.path.exists(list_path):
         with open(list_path) as f:
             ckpt_list = f.readlines()
-            ckpt_list = [save_path + '\n'] + ckpt_list
+            ckpt_list = [save_path_ + '\n'] + ckpt_list
     else:
-        ckpt_list = [save_path + '\n']
+        ckpt_list = [save_path_ + '\n']
 
     if max_keep is not None:
         for ckpt in ckpt_list[max_keep:]:
@@ -71,7 +71,9 @@ def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int 
 
     # copy best
     if is_best:
-        shutil.copyfile(save_path, os.path.join(save_dir, 'best_model.ckpt'))
+        dst_path = os.path.join(save_dir, 'best_model.ckpt')
+        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+        shutil.copyfile(save_path, dst_path)
 
 
 def load_checkpoint(ckpt_dir_or_file: str, map_location=None, load_best=False):
