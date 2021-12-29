@@ -39,20 +39,22 @@ class FasterRCNNEvaluator(object):
     def __init__(self,
                 config:CfgNode,
                 dataset:Dataset,
+                trained_faster_rcnn:FasterRCNN,
                 device:Device='cpu') -> None:
 
         self.config = config
         self.device = device
         
         self.dataloader = DataLoader(dataset,batch_size=1,shuffle=False,num_workers=8)    
-        self.faster_rcnn = FasterRCNN(config,device)
+        self.eval_faster_rcnn = FasterRCNN(config,device)
+        self.trained_faster_rcnn = trained_faster_rcnn
 
         self.metric = MAP()
 
-    def evaluate(self,faster_rcnn):
-        self.faster_rcnn.feature_extractor.load_state_dict(faster_rcnn.feature_extractor.state_dict())
-        self.faster_rcnn.rpn.load_state_dict(faster_rcnn.rpn.state_dict())
-        self.faster_rcnn.fast_rcnn.load_state_dict(faster_rcnn.fast_rcnn.state_dict())
+    def evaluate(self):
+        self.eval_faster_rcnn.feature_extractor.load_state_dict(self.trained_faster_rcnn.feature_extractor.state_dict())
+        self.eval_faster_rcnn.rpn.load_state_dict(self.trained_faster_rcnn.rpn.state_dict())
+        self.eval_faster_rcnn.fast_rcnn.load_state_dict(self.trained_faster_rcnn.fast_rcnn.state_dict())
         
         preds = list()
         target = list()
@@ -60,7 +62,7 @@ class FasterRCNNEvaluator(object):
         for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.dataloader)):
             images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
             with torch.no_grad():
-                predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn.predict(images_batch.float())
+                predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.eval_faster_rcnn.predict(images_batch.float())
 
             for img_idx in range(len(images_batch)):
                 pred_bboxes= predicted_bboxes_batch[img_idx]

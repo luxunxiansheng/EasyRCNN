@@ -85,7 +85,7 @@ class FasterRCNNTrainer:
         
         
         if eval_config is not None:
-            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,device)
+            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,self.faster_rcnn,device)
             self.best_map_50 = 0
         else:
             self.evaluator = None
@@ -182,7 +182,7 @@ class FasterRCNNTrainer:
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
-                eval_result =self.evaluator.evaluate(self.faster_rcnn)
+                eval_result =self.evaluator.evaluate()
                 self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 

@@ -10,5 +10,3 @@ FASTER_RCNN:
 CHECKPOINT:
     CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/best_model.ckpt'
 
-LOG:
-    LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp01'

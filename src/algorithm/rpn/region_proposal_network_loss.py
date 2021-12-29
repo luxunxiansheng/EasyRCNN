@@ -71,14 +71,10 @@ class RPNLoss(nn.Module):
         if target_labels is None:
             return torch.tensor(0.0,device=self.device),torch.tensor(0.0,device=self.device)
 
-        # we only concern those anchors which have positive labels and negative labels
-        target_keep =  target_labels.ne(-1).nonzero().squeeze()
-
+        
         #----------------------- classfication loss -----------------------#
         predicted_scores = predicted_scores.permute(1,2,0).contiguous().view(-1,2)
-        predicted_scores_keep = torch.index_select(predicted_scores,0,target_keep)
-        target_labels_keep = torch.index_select(target_labels,0,target_keep) 
-        classification_loss = F.cross_entropy(predicted_scores_keep,target_labels_keep.long(),ignore_index=-1)
+        classification_loss = F.cross_entropy(predicted_scores,target_labels.long(),ignore_index=-1)
 
         #----------------------- regression loss --------------------------#
         inside_weight = torch.zeros(target_offsets.shape,device=self.device)

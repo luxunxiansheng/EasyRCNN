@@ -79,9 +79,9 @@ class ProposalCreator:
         predicted_scores = predicted_scores.view(feature_height,feature_width,-1,2) 
 
         #------------------------Objectness_scores---------------------------------#
+        predicted_softmax_scores = torch.softmax(predicted_scores,dim=3)
         #[Num_anchors]
-        predicted_objectness_scores= predicted_scores[:,:,:,1].contiguous().view(-1)
-
+        predicted_objectness_scores= predicted_softmax_scores[:,:,:,1].contiguous().view(-1)
 
         #------------------------Proposed ROI bboxs---------------------------------#
         # Convert anchors into proposal via bbox transformations.
