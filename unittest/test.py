@@ -26,6 +26,7 @@
 
 
 import os
+from random import sample
 import sys
 from datetime import datetime
 
@@ -196,7 +197,7 @@ class TestRPNLoss(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-@unittest.skip('passed')
+unittest.skip('passed')
 class TestVOCDataset(unittest.TestCase):
     def setUp(self) -> None:
         self.voc_dataset = VOCDataset(config)
@@ -210,19 +211,18 @@ class TestVOCDataset(unittest.TestCase):
     def test_voc_dataset(self):
         print(self.voc_dataset.__len__())
         
-        samples = 1
-        imgs=torch.zeros([samples,3,96,500])       
-        for i in range(samples):
-            image,bboxes,lables,diff,img_file= self.voc_dataset[1430]
-            print(image.shape)
-            print(bboxes.shape)
-            print(lables.shape)
-            print(diff.shape)
-            print(img_file)
+        image,bboxes,lables,diff,img_file= self.voc_dataset[1854]
+        print(image.shape)
+        print(bboxes.shape)
+        print(lables.shape)
+        print(diff.shape)
+        print(img_file)
+
+        imgs = torch.zeros([1,3,image.shape[1],image.shape[2]])
             
-            lable_names = [VOCDataset.VOC_BBOX_LABEL_NAMES[i] for i in lables]
-            img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=bboxes,labels=lable_names,resize_shape=(96,500))
-            imgs[i,:,:,:] = img_and_bbox
+        lable_names = [VOCDataset.VOC_BBOX_LABEL_NAMES[i] for i in lables]
+        img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=bboxes,labels=lable_names,resize_shape=(image.shape[1],image.shape[2]))
+        imgs[0,:,:,:] = img_and_bbox
 
         self.writer.add_images('image',imgs,) 
 
@@ -314,7 +314,7 @@ class TestFasterRCNNTrainer(unittest.TestCase):
     def test_train(self):
         self.trainer.train()
 
-
+@unittest.skip('passed')
 class TestCheckPointTool(unittest.TestCase):
     def setUp(self):
         pass

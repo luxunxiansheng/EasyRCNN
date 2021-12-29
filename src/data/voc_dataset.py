@@ -28,11 +28,11 @@
 
 import os
 import xml.etree.ElementTree as ET
+from albumentations.augmentations.geometric.resize import SmallestMaxSize
 from albumentations.pytorch.transforms import ToTensor
 
 import torch
 import torch.utils.data as data
-from torchvision.io import read_image
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
@@ -79,12 +79,15 @@ class VOCDataset(data.Dataset):
 
         self.augmented = config.VOC_DATASET.AUGMENTED
 
-        self.transforms = A.Compose([A.HorizontalFlip(p=0.5),
+        self.transforms = A.Compose([
+                                    A.HorizontalFlip(p=0.5),
                                     A.VerticalFlip(p=0.5),
-                                    A.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5),],
+                                    A.SmallestMaxSize(600,always_apply=True),
+                                    A.LongestMaxSize(1000,always_apply=True),],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
         self.toTensor = ToTensorV2()
+    
     
     def get_label_names(self):
         return self.label_names
@@ -122,7 +125,6 @@ class VOCDataset(data.Dataset):
         
         # HWC->CHW  
         image = self.toTensor(image=image)['image']
-
         
         # convert from xyxy to yxyx 
         bboxes = torch.tensor(bboxes,dtype=torch.float32).index_select(dim=1, index=torch.tensor([1,0,3,2]))     

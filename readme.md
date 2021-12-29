@@ -32,18 +32,19 @@ In this project, besides the algoirthms, we also focus on the following tasks:
 
    ***2.1*** we use the open source dataset <https://www.nih.gov/news-events/news-releases/nih-clinical-center-releases-dataset-32000-ct-images> to train our models The dataset contains 32,000 CT images from the NIH Clinical Center.
 
-3. ****Classic algorithms****:
+3. ****Classic algorithms**** :
+   
    ***3.1*** It is a common practice today to leverage the existing algorithm libaray to build a deep learning framework for medical image analysis.But in this project, we decided to build our own on some of the classic algorthims including Faster R-CNN, Mask R-CNN and so on. We believe this will give us a better understanding of the underlying algorithms in particular when we will develop our own toolbox.
 
 ## Release information
 
-1. Version: 1.0.0 Date: 2020-12-25
-We release the first version of the project. In this version, we implement the basic framework of the project inculding the following tasks:
+1. Version: 1.0.0 Date: 2020-12-25  
+   We release the first version of the project. In this version, we implement the basic framework of the project inculding the following tasks:
 
 * log with the tensorboard
 * checkpoint
 * metrics
 * faster rcnn
 * notes:
-      1. It is anti-pattern to use the __Call__ method in model classe to call the forward method. A better way is to use a explicit predict method to call the forward method and  return the output. It is easier for the user to know it is a prediction method.
-      2. Loss class shoudl provide an explicit method, say , compute(), to comupte the loss and return the result instead of using the __call__ method.  
+   1. It is anti-pattern to use the __Call__ method in model classe to call the forward method. A better way is to use a explicit predict method to call the forward method and  return the output. It is easier for the user to know it is a prediction method.
+   2. Loss class shoudl provide an explicit method, say , compute(), to comupte the loss and return the result instead of using the __call__ method.  

@@ -3,14 +3,14 @@ FASTER_RCNN:
   NUM_WORKERS: 2
   TRAIN:
     CHECK_FREQUENCY: 500
-    EPOCHS: 200
+    EPOCHS: 14
     PRETRAINED_MODEL_PATH: None
     RESUME: False
-    STEP_SIZE: 10
+    STEP_SIZE: 9
 
 
 VOC_DATASET:
-  AUGMENTED: True
+  AUGMENTED: False
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/model_checkpoint.ckpt'
