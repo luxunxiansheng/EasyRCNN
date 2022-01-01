@@ -36,12 +36,12 @@ class CNNBlock(nn.Module):
                 relu:bool=True, 
                 same_padding:bool=False, 
                 bn:bool=False):
-
         super().__init__()
+        # Note: Only support stride 1 for now
         padding = int((kernel_size - 1) / 2) if same_padding else 0
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding=padding)
         self.bn = nn.BatchNorm2d(out_channels, eps=0.001, momentum=0, affine=True) if bn else None
-        self.relu = nn.ReLU(inplace=True) if relu else None
+        self.relu = nn.ReLU(inplace=False) if relu else None
 
     def forward(self, x:torch.Tensor):
         x = self.conv(x)
@@ -73,7 +73,11 @@ def weights_normal_init(model, dev=0.01):
             weights_normal_init(m, dev)
     else:
         for m in model.modules():
-            if isinstance(m, nn.Conv2d):
+            if isinstance(m, nn.Conv2d):                
+                #print torch.sum(m.weight)
                 m.weight.data.normal_(0.0, dev)
+                if m.bias is not None:
+                    m.bias.data.fill_(0.0)
             elif isinstance(m, nn.Linear):
                 m.weight.data.normal_(0.0, dev)
+

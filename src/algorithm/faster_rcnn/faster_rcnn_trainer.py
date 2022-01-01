@@ -24,6 +24,7 @@
 # #### END LICENSE BLOCK #####
 # /
 
+from albumentations.augmentations.geometric.functional import scale
 from tqdm import tqdm
 
 from torch.utils.data.dataset import Dataset
@@ -100,28 +101,34 @@ class FasterRCNNTrainer:
         total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
         for epoch in tqdm(range(start_epoch,self.epoches)):
             # train the model for current epoch
-            for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.train_dataloader)):
+            for _,(images_batch,bboxes_batch,labels_batch,_,id,scales) in tqdm(enumerate(self.train_dataloader)):
 
+
+                # put into gpu in case of gpu avalible 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
-                with torch.autograd.set_detect_anomaly(True): 
-                    features_batch = self.feature_extractor.predict(images_batch.float())
-                    rpn_predicted_scores_batch, rpn_predicted_offset_batch = self.rpn.predict(features_batch)
-                
+                # extract the batch feature map from images
+                features_batch = self.feature_extractor.predict(images_batch.float())
+
+                # predict the rpn scores and offsets from features
+                rpn_predicted_scores_batch, rpn_predicted_offset_batch = self.rpn.predict(features_batch)
+
                 total_rpn_cls_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 total_rpn_reg_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 total_roi_cls_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 total_roi_reg_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 
+                # process image by image
                 for image_index in range(images_batch.shape[0]):
                     feature = features_batch[image_index]
                     image = images_batch[image_index]
+                    scale = scales[image_index]
                     feature_height,feature_width = feature.shape[1:]
                     
                     img_height,img_width = image.shape[1:]
                     gt_bboxes = bboxes_batch[image_index]
                     gt_labels = labels_batch[image_index]
-
+                    
                     rpn_predicted_scores = rpn_predicted_scores_batch[image_index]
                     rpn_predicted_offsets = rpn_predicted_offset_batch[image_index]
 
@@ -144,14 +151,15 @@ class FasterRCNNTrainer:
                                                                         img_height,
                                                                         img_width,
                                                                         feature_height,
-                                                                        feature_width)
+                                                                        feature_width,
+                                                                        scale)
 
                     sampled_roi,gt_roi_label,gt_roi_offset = self.proposal_target_creator.create(proposed_roi_bboxes,
                                                                                                 gt_bboxes,
                                                                                                 gt_labels
                                                                                             )
-                    with torch.autograd.set_detect_anomaly(True): 
-                        predicted_roi_cls_score,predicted_roi_offset = self.fast_rcnn.predict(feature,sampled_roi)
+                    
+                    predicted_roi_cls_score,predicted_roi_offset = self.fast_rcnn.predict(feature,sampled_roi)
                     
                     roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_roi_cls_score,
                                                                     predicted_roi_offset,
@@ -161,19 +169,18 @@ class FasterRCNNTrainer:
                     total_roi_cls_loss = total_roi_cls_loss + roi_cls_loss
                     total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
 
-                with torch.autograd.set_detect_anomaly(True): 
-                    total_loss = total_rpn_cls_loss + \
+                
+                total_loss = total_rpn_cls_loss + \
                                 total_rpn_reg_loss+ \
                                 total_roi_cls_loss+ \
                                 total_roi_reg_loss
                                 
-                    self.optimizer.zero_grad()
-                    total_loss.backward()                    
-                    self.optimizer.step()
+                self.optimizer.zero_grad()
+                total_loss.backward()                    
+                self.optimizer.step()
 
                 if steps%self.train_config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
                     self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch, total_rpn_cls_loss, total_rpn_reg_loss, total_roi_cls_loss, total_roi_reg_loss, img_height, img_width, gt_bboxes, gt_labels)
-                    
                 steps += 1
             
             # adjust the learning rate if necessary

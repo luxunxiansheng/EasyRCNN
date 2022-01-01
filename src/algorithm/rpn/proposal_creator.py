@@ -114,7 +114,8 @@ class ProposalCreator:
         proposed_roi_bboxs_xyxy=proposed_roi_bboxs.index_select(dim=1,
                                                                 index=torch.tensor([1,0,3,2],
                                                                 device=proposed_roi_bboxs.device))
-
+    
+        
         keep = nms(proposed_roi_bboxs_xyxy,proposed_objectness_scores,
                     self.nms_thresh)
         

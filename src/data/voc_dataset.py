@@ -24,8 +24,6 @@
 # #### END LICENSE BLOCK #####
 # /
 
-
-
 import os
 import xml.etree.ElementTree as ET
 from albumentations.augmentations.geometric.resize import SmallestMaxSize
@@ -81,9 +79,8 @@ class VOCDataset(data.Dataset):
 
         self.transforms = A.Compose([
                                     A.HorizontalFlip(p=0.5),
-                                    A.VerticalFlip(p=0.5),
                                     A.SmallestMaxSize(600,always_apply=True),
-                                    A.LongestMaxSize(1000,always_apply=True),],
+                                    ],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
         self.toTensor = ToTensorV2()
@@ -97,6 +94,7 @@ class VOCDataset(data.Dataset):
     
     def __getitem__(self, index):
         id_ = self.ids[index]
+        
         annotation = ET.parse(os.path.join(self.data_dir, 'Annotations', id_ + '.xml'))
         bboxes =     list()
         category_id =    list()
@@ -115,6 +113,8 @@ class VOCDataset(data.Dataset):
         image_file = os.path.join(self.data_dir, 'JPEGImages', id_ + '.jpg')
         # HWC
         image = cv2.imread(image_file)
+        original_height, original_width, _ = image.shape
+
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         if self.augmented:
@@ -130,5 +130,6 @@ class VOCDataset(data.Dataset):
         bboxes = torch.tensor(bboxes,dtype=torch.float32).index_select(dim=1, index=torch.tensor([1,0,3,2]))     
         category_id = torch.tensor(category_id,dtype=torch.long)
         difficult = torch.tensor(difficult, dtype=torch.uint8)
+        scale = image.shape[1]/original_height
         
-        return image, bboxes,category_id, difficult,image_file
+        return image, bboxes,category_id, difficult,id_,scale

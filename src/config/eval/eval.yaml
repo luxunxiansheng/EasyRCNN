@@ -4,9 +4,12 @@ RPN:
         N_POST_NMS: 300
 
 FASTER_RCNN:
-    FEATRUE_EXTRACTOR: 'pretrained_vgg16'
     SCORE_THRESHOLD : 0.03
     NUM_WORKERS : 8
+
+VOC_DATASET:
+    AUGMENTED: True
+
 CHECKPOINT:
     CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/best_model.ckpt'
 

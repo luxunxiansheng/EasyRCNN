@@ -59,7 +59,7 @@ class FasterRCNNEvaluator(object):
         preds = list()
         target = list()
         
-        for _,(images_batch,bboxes_batch,labels_batch,_,img_file) in tqdm(enumerate(self.dataloader)):
+        for _,(images_batch,bboxes_batch,labels_batch,_,_,_) in tqdm(enumerate(self.dataloader)):
             images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
             with torch.no_grad():
                 predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.eval_faster_rcnn.predict(images_batch.float())

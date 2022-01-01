@@ -54,8 +54,6 @@ _C.VOC_DATASET.AUGMENTED = False
 
 # -------------------------- RPN ---------------------------------------------------#
 _C.RPN = ConfigNode()
-
-_C.RPN.BACKBONE = "vgg16"
 _C.RPN.FEATURE_CHANNELS = 512
 _C.RPN.MID_CHANNELS = 512
 _C.RPN.RPN_SIGMA = 3  
@@ -94,7 +92,7 @@ _C.RPN.PROPOSAL_TARGET_CREATOR.OFFSET_NORM_STD = [0.1, 0.1, 0.2, 0.2]
 # ----------------------- FAST_RCNN -----------------------------------------------------#
 _C.FAST_RCNN = ConfigNode()
 _C.FAST_RCNN.IN_CHANNELS = _C.RPN.FEATURE_CHANNELS
-_C.FAST_RCNN.FC7_CHANNELS = 1024
+_C.FAST_RCNN.FC7_CHANNELS = 4096
 _C.FAST_RCNN.NUM_CLASSES = 20
 _C.FAST_RCNN.ROI_SIZE = 7
 _C.FAST_RCNN.SPATIAL_SCALE = 1.0 / _C.RPN.ANCHOR_CREATOR.FEATURE_STRIDE
@@ -102,7 +100,7 @@ _C.FAST_RCNN.ROI_SIGMMA = 1.0
 
 # ----------------------- FASTER_RCNN------------------------------------------------------#
 _C.FASTER_RCNN = ConfigNode()
-_C.FASTER_RCNN.FEATRUE_EXTRACTOR = 'vgg16'
+_C.FASTER_RCNN.FEATRUE_EXTRACTOR = 'pretrained_vgg16'
 _C.FASTER_RCNN.NMS_THRESHOLD = 0.3
 _C.FASTER_RCNN.SCORE_THRESHOLD = 0.7
 _C.FASTER_RCNN.OFFSET_NORM_MEAN = [0.0, 0.0, 0.0, 0.0]

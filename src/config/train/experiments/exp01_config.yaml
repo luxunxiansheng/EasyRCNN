@@ -1,5 +1,4 @@
 FASTER_RCNN:
-  FEATRUE_EXTRACTOR: 'pretrained_vgg16'
   NUM_WORKERS: 2
   TRAIN:
     CHECK_FREQUENCY: 500
@@ -8,9 +7,8 @@ FASTER_RCNN:
     RESUME: False
     STEP_SIZE: 9
 
-
 VOC_DATASET:
-  AUGMENTED: False
+  AUGMENTED: True
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/model_checkpoint.ckpt'
