@@ -45,7 +45,6 @@ class FasterRCNN(nn.Module):
     def __init__(self,
                 config:CfgNode,
                 device:Device='cpu'):
-
         super().__init__()
         self.config = config
         self.device = device
