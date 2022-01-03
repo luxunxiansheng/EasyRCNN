@@ -4,11 +4,11 @@ RPN:
         N_POST_NMS: 300
 
 FASTER_RCNN:
-    SCORE_THRESHOLD : 0.03
+    SCORE_THRESHOLD : 0.05
     NUM_WORKERS : 8
 
 VOC_DATASET:
-    AUGMENTED: True
+    AUGMENTED: False
 
 CHECKPOINT:
     CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/best_model.ckpt'

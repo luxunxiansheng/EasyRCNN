@@ -73,15 +73,15 @@ class FasterRCNNEvaluator(object):
 
                 single_image_predict_dict = dict(
                                             # convert yxyx to xyxy
-                                            boxes = pred_bboxes.cpu().index_select(1,torch.tensor([1,0,3,2])),
-                                            scores = pred_scores.cpu(),
-                                            labels = pred_labels.cpu(),
+                                            boxes = pred_bboxes.index_select(1,torch.tensor([1,0,3,2],device=pred_bboxes.device)).float(),
+                                            scores = pred_scores,
+                                            labels = pred_labels,
                                             )
                 preds.append(single_image_predict_dict)
 
                 single_image_gt_dict = dict(
-                                            boxes = gt_bboxes.cpu().index_select(1,torch.tensor([1,0,3,2])),
-                                            labels = gt_labels.cpu(),
+                                            boxes = gt_bboxes.index_select(1,torch.tensor([1,0,3,2],device=gt_bboxes.device)),
+                                            labels = gt_labels,
                                             )
 
                 target.append(single_image_gt_dict)
