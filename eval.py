@@ -53,12 +53,8 @@ def test():
     faster_rcnn = FasterRCNN(config,device)
 
     ckpt = load_checkpoint(config.CHECKPOINT.CHECKPOINT_PATH,load_best=True)
-    faster_rcnn.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
-    faster_rcnn.rpn.load_state_dict(ckpt['rpn_model'])
-    faster_rcnn.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model']) 
-
-    evaluator = FasterRCNNEvaluator(config,voc_dataset,faster_rcnn,device)
-    map = evaluator.evaluate()
+    evaluator = FasterRCNNEvaluator(config,voc_dataset,device)
+    map = evaluator.evaluate(ckpt)
     return map
 
 if __name__=="__main__":
