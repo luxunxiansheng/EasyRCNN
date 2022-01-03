@@ -182,7 +182,7 @@ class FasterRCNNTrainer:
                 self.optimizer.step()
 
                 if steps%self.train_config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
-                    self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch, total_rpn_cls_loss, total_rpn_reg_loss, total_roi_cls_loss, total_roi_reg_loss, img_height, img_width, gt_bboxes, gt_labels)
+                    self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch,img_height, img_width, gt_bboxes, gt_labels)
                 steps += 1
             
             # adjust the learning rate if necessary
@@ -308,13 +308,13 @@ class FasterRCNNTrainer:
         """
         preds = [dict(
                     # convert yxyx to xyxy
-                    boxes = predicted_bboxes.index_select(1,torch.tensor([1,0,3,2],device=predicted_bboxes.device)),
+                    boxes = predicted_bboxes[:,[1,0,3,2]].float(),
                     scores = predicted_scores,
                     labels = predicted_labels,
                     )]
         
         target = [dict(
-                    boxes = gt_bboxes.index_select(1,torch.tensor([1,0,3,2],device=gt_bboxes.device)),
+                    boxes = gt_bboxes[:,[1,0,3,2]],
                     labels = gt_labels,
                     )]  
 

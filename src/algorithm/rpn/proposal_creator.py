@@ -121,10 +121,7 @@ class ProposalCreator:
         #
 
         # Apply nms (e.g. threshold = 0.7)
-        proposed_roi_bboxs_xyxy=predicted_roi_bboxs.index_select(dim=1,
-                                                                index=torch.tensor([1,0,3,2],
-                                                                device=predicted_roi_bboxs.device))
-        keep = nms(proposed_roi_bboxs_xyxy,proposed_objectness_scores,
+        keep = nms(predicted_roi_bboxs[:,[1,0,3,2]],proposed_objectness_scores,
                     self.nms_thresh)
         
         #

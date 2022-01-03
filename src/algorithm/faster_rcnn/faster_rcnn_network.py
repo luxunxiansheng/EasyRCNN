@@ -177,11 +177,7 @@ class FasterRCNN(nn.Module):
             cls_bbox = cls_bbox[mask]
             class_prob = class_prob[mask]
             
-            cls_bboxs_xyxy=cls_bbox.index_select(dim=1,
-                                                index=torch.tensor([1,0,3,2],
-                                                device=cls_bbox.device))
-
-            keep = nms(cls_bboxs_xyxy,class_prob,nms_threshold)
+            keep = nms(cls_bbox[:,[1,0,3,2]],class_prob,nms_threshold)
             
             # keep top-K bboxes only if there is at least one bbox left for current class
             if keep.shape[0] > 0:
