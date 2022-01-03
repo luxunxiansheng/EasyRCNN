@@ -83,10 +83,10 @@ class FasterRCNNTrainer:
 
         self.resume = train_config.FASTER_RCNN.TRAIN.RESUME
         self.checkpoint_path = train_config.CHECKPOINT.CHECKPOINT_PATH
-        
+        self.checkpoint = None
         
         if eval_config is not None:
-            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,self.faster_rcnn,device)
+            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,device)
             self.best_map_50 = 0
         else:
             self.evaluator = None
@@ -101,7 +101,7 @@ class FasterRCNNTrainer:
         total_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
         for epoch in tqdm(range(start_epoch,self.epoches)):
             # train the model for current epoch
-            for _,(images_batch,bboxes_batch,labels_batch,_,id,scales) in tqdm(enumerate(self.train_dataloader)):
+            for _,(images_batch,bboxes_batch,labels_batch,_,ids,scales) in tqdm(enumerate(self.train_dataloader)):
 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
@@ -187,11 +187,21 @@ class FasterRCNNTrainer:
             
             # adjust the learning rate if necessary
             self.scheduler.step()  
+
+            self.checkpoint = {
+                'feature_extractor_model':self.feature_extractor.state_dict(),
+                'rpn_model': self.rpn.state_dict(),
+                'fast_rcnn_model': self.fast_rcnn.state_dict(),
+                'epoch': epoch,
+                'steps': steps,
+                'optimizer': self.optimizer.state_dict(),
+                'scheduler': self.scheduler.state_dict()
+                }
             
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
-                eval_result =self.evaluator.evaluate()
+                eval_result =self.evaluator.evaluate(self.checkpoint)
                 self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
@@ -201,7 +211,7 @@ class FasterRCNNTrainer:
                     self.best_map_50 = eval_result['map_50'].item()
 
             # save a checkpoint for current epoch. If it is better than the best model so far, save it as the best model
-            self._save_checkpoint_per_epoch(epoch,steps,is_best)  
+            save_checkpoint(self.checkpoint, self.checkpoint_path, is_best=is_best)
 
     def _check_progress(self, 
                         steps, 
@@ -209,10 +219,6 @@ class FasterRCNNTrainer:
                         images_batch,
                         bboxes_batch,
                         labels_batch,
-                        total_rpn_cls_loss,
-                        total_rpn_reg_loss,
-                        total_roi_cls_loss,
-                        total_roi_reg_loss,
                         img_height,
                         img_width,
                         gt_bboxes,
@@ -255,28 +261,15 @@ class FasterRCNNTrainer:
                 self.writer.add_scalar('train/map_50',map['map_50'].item(),steps)
 
     def _resume(self):
-        ckpt = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
-        self.feature_extractor.load_state_dict(ckpt['feature_extractor_model'])
-        self.rpn.load_state_dict(ckpt['rpn_model'])
-        self.fast_rcnn.load_state_dict(ckpt['fast_rcnn_model'])
-        self.optimizer.load_state_dict(ckpt['optimizer'])
-        self.scheduler.load_state_dict(ckpt['scheduler'])
-        start_epoch = ckpt['epoch']
-        steps = ckpt['steps']
+        self.checkpoint = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
+        self.feature_extractor.load_state_dict(self.checkpoint['feature_extractor_model'])
+        self.rpn.load_state_dict(self.checkpoint['rpn_model'])
+        self.fast_rcnn.load_state_dict(self.checkpoint['fast_rcnn_model'])
+        self.optimizer.load_state_dict(self.checkpoint['optimizer'])
+        self.scheduler.load_state_dict(self.checkpoint['scheduler'])
+        start_epoch = self.checkpoint['epoch']
+        steps = self.checkpoint['steps']
         return steps,start_epoch
-    
-    def _save_checkpoint_per_epoch(self,epoch,steps,is_best):
-        cpkt = {
-                'feature_extractor_model':self.feature_extractor.state_dict(),
-                'rpn_model': self.rpn.state_dict(),
-                'fast_rcnn_model': self.fast_rcnn.state_dict(),
-                'epoch': epoch,
-                'steps': steps,
-                'optimizer': self.optimizer.state_dict(),
-                'scheduler': self.scheduler.state_dict()
-                }
-        
-        save_checkpoint(cpkt, self.checkpoint_path, is_best=is_best)
 
     def _evaluate_on_train_set(self, 
                 gt_bboxes:torch.Tensor, 

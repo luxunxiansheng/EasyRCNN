@@ -75,9 +75,7 @@ class RPNLoss(nn.Module):
 
         
         #----------------------- classfication loss -----------------------#
-        predicted_scores = predicted_scores.permute(1,2,0).contiguous().view(-1,2)
-
-        
+        predicted_scores = predicted_scores.permute(1,2,0).contiguous().view(-1,2)        
         classification_loss = F.cross_entropy(predicted_scores,target_labels.long(),ignore_index=-1)
 
         #----------------------- regression loss --------------------------#

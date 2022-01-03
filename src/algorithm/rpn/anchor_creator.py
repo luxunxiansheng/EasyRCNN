@@ -60,10 +60,10 @@ class AnchorCreator:
         shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='xy')
         shift = torch.stack((shift_y.ravel(), shift_x.ravel(),shift_y.ravel(), shift_x.ravel()), dim=1)
 
-        A = self.anchor_base.shape[0]
-        K = shift.shape[0]
-        anchors = self.anchor_base.reshape([1, A, 4]) + shift.reshape([1, K, 4]).permute(1, 0, 2)
-        anchors = anchors.reshape([K * A, 4]).to(torch.float32)
+        num_base_anchors = self.anchor_base.shape[0]
+        num_features = shift.shape[0]
+        anchors = self.anchor_base.reshape([1, num_base_anchors, 4]) + shift.reshape([1, num_features, 4]).permute(1, 0, 2)
+        anchors = anchors.reshape([num_features * num_base_anchors, 4]).to(torch.float32)
         return anchors
 
     def _create_anchor_base(self):

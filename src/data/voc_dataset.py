@@ -78,7 +78,7 @@ class VOCDataset(data.Dataset):
         self.augmented = config.VOC_DATASET.AUGMENTED
 
         self.transforms = A.Compose([
-                                    A.HorizontalFlip(p=0.5),
+                                    #A.HorizontalFlip(p=0.5),
                                     A.SmallestMaxSize(600,always_apply=True),
                                     ],
                                     bbox_params=A.BboxParams(format='pascal_voc',

@@ -8,7 +8,7 @@ FASTER_RCNN:
     NUM_WORKERS : 8
 
 VOC_DATASET:
-    AUGMENTED: False
+    AUGMENTED: True
 
 CHECKPOINT:
     CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/best_model.ckpt'
