@@ -25,7 +25,6 @@
 # /
 
 import torch
-from torchvision.ops import nms
 from torchvision.ops import box_iou
 
 from location_utility import LocationUtility
@@ -59,20 +58,21 @@ class ProposalTargetCreator(object):
 
         proposed_roi_bboxs = torch.concat((proposed_roi_bboxs, gt_bboxs),dim=0)
 
-        ious = box_iou(proposed_roi_bboxs, gt_bboxs)
-        max_ious_for_proposed_roi_bboxs, argmax_ious_for_proposed_roi_bboxs= ious.max(dim=1)
+        ious = box_iou(proposed_roi_bboxs[:,[1,0,3,2]], gt_bboxs[:,[1,0,3,2]])
+        gt_max_ious_for_proposed_roi_bboxs, gt_index_with_max_ious_for_proposed_roi_bboxs= ious.max(dim=1)
         
-        gt_roi_label = gt_labels[argmax_ious_for_proposed_roi_bboxs] 
+        # for each proposed roi bbox, assign the label as the gt label with max iou
+        gt_roi_label = gt_labels[gt_index_with_max_ious_for_proposed_roi_bboxs] 
 
-        # Select foreground RoIs as those with >= pos_iou_thresh IoU.
-        positive_index = torch.where(max_ious_for_proposed_roi_bboxs >= self.positive_iou_thresh)[0]
+        # select proposed roi bbox as positive with >= pos_iou_thresh IoU.
+        positive_index = torch.where(gt_max_ious_for_proposed_roi_bboxs >= self.positive_iou_thresh)[0]
         n_positive_roi = int(min(n_positive_roi, len(positive_index)))
         if len(positive_index) > 1:
             selected_positive_index = torch.multinomial(positive_index.float(),num_samples=n_positive_roi, replacement=False)
             positive_index = positive_index[selected_positive_index]        
 
         # Select background RoIs as those within [neg_iou_thresh_lo, neg_iou_thresh_hi).
-        negative_index = torch.where((max_ious_for_proposed_roi_bboxs < self.negative_iou_thresh_hi) &(max_ious_for_proposed_roi_bboxs >= self.negative_iou_thresh_lo))[0]
+        negative_index = torch.where((gt_max_ious_for_proposed_roi_bboxs < self.negative_iou_thresh_hi) &(gt_max_ious_for_proposed_roi_bboxs >= self.negative_iou_thresh_lo))[0]
         n_negative_rois = self.n_sample - n_positive_roi
         n_negative_rois = int(min(n_negative_rois,len(negative_index)))
         if len(negative_index) > 1:
@@ -81,14 +81,14 @@ class ProposalTargetCreator(object):
         
         # The indices that we're selecting (both positive and negative).
         keep_index = torch.concat((positive_index,negative_index),dim=0)
-        gt_roi_label = gt_roi_label[keep_index]
-        gt_roi_label[n_positive_roi:] = 0  # negative labels --> 0
+        gt_label_for_sampled_roi = gt_roi_label[keep_index]
+        gt_label_for_sampled_roi[n_positive_roi:] = 0  # negative labels --> 0
         sampled_roi = proposed_roi_bboxs[keep_index]
-        gt_bboxes = gt_bboxs[argmax_ious_for_proposed_roi_bboxs[keep_index]]
+        gt_bboxes_for_sampled_roi = gt_bboxs[gt_index_with_max_ious_for_proposed_roi_bboxs[keep_index]]
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
-        gt_roi_offsets = LocationUtility.bbox2offset(sampled_roi, gt_bboxes)
-        gt_roi_offsets = (gt_roi_offsets - self.loc_normalize_mean.to(gt_roi_offsets.device)) / self.loc_normalize_std.to(gt_roi_offsets.device)
-        return sampled_roi,gt_roi_label,gt_roi_offsets
+        gt_offsets_for_sampled_roi = LocationUtility.bbox2offset(sampled_roi, gt_bboxes_for_sampled_roi)
+        gt_offsets_for_sampled_roi = (gt_offsets_for_sampled_roi - self.loc_normalize_mean.to(gt_offsets_for_sampled_roi.device)) / self.loc_normalize_std.to(gt_offsets_for_sampled_roi.device)
+        return sampled_roi,gt_label_for_sampled_roi,gt_offsets_for_sampled_roi
 
 

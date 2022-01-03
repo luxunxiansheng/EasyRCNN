@@ -106,7 +106,6 @@ class FasterRCNN(nn.Module):
                                                                 feature_height,
                                                                 feature_width)
 
-            
             bboxes, labels, scores = self.detect(feature, 
                                                 proposed_roi_bboxes, 
                                                 img_height, 

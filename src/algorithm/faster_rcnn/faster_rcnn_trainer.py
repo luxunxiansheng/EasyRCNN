@@ -103,8 +103,6 @@ class FasterRCNNTrainer:
             # train the model for current epoch
             for _,(images_batch,bboxes_batch,labels_batch,_,id,scales) in tqdm(enumerate(self.train_dataloader)):
 
-
-                # put into gpu in case of gpu avalible 
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
                 # extract the batch feature map from images
@@ -118,7 +116,7 @@ class FasterRCNNTrainer:
                 total_roi_cls_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 total_roi_reg_loss = torch.tensor(0.0,requires_grad=True,device=self.device)
                 
-                # process image by image
+                # image by image
                 for image_index in range(images_batch.shape[0]):
                     feature = features_batch[image_index]
                     image = images_batch[image_index]
@@ -132,9 +130,11 @@ class FasterRCNNTrainer:
                     rpn_predicted_scores = rpn_predicted_scores_batch[image_index]
                     rpn_predicted_offsets = rpn_predicted_offset_batch[image_index]
 
+                    
                     anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
                     
-                    rpn_cls_loss,rpn_reg_los=self.rpn_loss.compute( anchors_of_img,
+                    # rpn loss
+                    rpn_cls_loss,rpn_reg_los=self.rpn_loss.compute(anchors_of_img,
                                                             rpn_predicted_scores,
                                                             rpn_predicted_offsets,
                                                             gt_bboxes,
@@ -145,26 +145,28 @@ class FasterRCNNTrainer:
                     total_rpn_cls_loss = total_rpn_cls_loss + rpn_cls_loss
                     total_rpn_reg_loss = total_rpn_reg_loss + rpn_reg_los
 
-                    proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,
-                                                                        rpn_predicted_scores.detach(),
-                                                                        rpn_predicted_offsets.detach(),
-                                                                        img_height,
-                                                                        img_width,
-                                                                        feature_height,
-                                                                        feature_width,
-                                                                        scale)
 
-                    sampled_roi,gt_roi_label,gt_roi_offset = self.proposal_target_creator.create(proposed_roi_bboxes,
+                    proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,
+                                                                    rpn_predicted_scores.detach(),
+                                                                    rpn_predicted_offsets.detach(),
+                                                                    img_height,
+                                                                    img_width,
+                                                                    feature_height,
+                                                                    feature_width,
+                                                                    scale)
+
+                    sampled_roi,gt_label_for_sampled_roi,gt_offset_for_sampled_roi = self.proposal_target_creator.create(proposed_roi_bboxes,
                                                                                                 gt_bboxes,
                                                                                                 gt_labels
                                                                                             )
                     
-                    predicted_roi_cls_score,predicted_roi_offset = self.fast_rcnn.predict(feature,sampled_roi)
+                    predicted_sampled_roi_cls_score,predicted_sampled_roi_offset = self.fast_rcnn.predict(feature,sampled_roi)
                     
-                    roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_roi_cls_score,
-                                                                    predicted_roi_offset,
-                                                                    gt_roi_label,
-                                                                    gt_roi_offset)                                                                    
+                    # roi loss
+                    roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_sampled_roi_cls_score,
+                                                                    predicted_sampled_roi_offset,
+                                                                    gt_label_for_sampled_roi,
+                                                                    gt_offset_for_sampled_roi)                                                                    
                     
                     total_roi_cls_loss = total_roi_cls_loss + roi_cls_loss
                     total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
@@ -216,10 +218,6 @@ class FasterRCNNTrainer:
                         gt_bboxes,
                         gt_labels):
 
-        self.writer.add_scalar('rpn/cls_loss',total_rpn_cls_loss.item(),steps)
-        self.writer.add_scalar('rpn/reg_loss',total_rpn_reg_loss.item(),steps)
-        self.writer.add_scalar('roi/cls_loss',total_roi_cls_loss.item(),steps)
-        self.writer.add_scalar('roi/reg_loss',total_roi_reg_loss.item(),steps)
         self.writer.add_scalar('total_loss',total_loss.item(),steps)
         self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 

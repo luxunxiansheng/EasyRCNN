@@ -66,6 +66,8 @@ class RPNLoss(nn.Module):
                     regression_loss: float.
 
         """
+
+        # assgin the target_bboxs to the corresponding anchors
         target_labels,target_offsets = self.anchor_target_creator.create(anchors_of_img,target_bboxs,img_height,img_width)
 
         if target_labels is None:
@@ -74,6 +76,8 @@ class RPNLoss(nn.Module):
         
         #----------------------- classfication loss -----------------------#
         predicted_scores = predicted_scores.permute(1,2,0).contiguous().view(-1,2)
+
+        
         classification_loss = F.cross_entropy(predicted_scores,target_labels.long(),ignore_index=-1)
 
         #----------------------- regression loss --------------------------#
