@@ -50,9 +50,7 @@ class FasterRCNNEvaluator(object):
         self.metric = MAP()
 
     def evaluate(self,model_states:dict) -> float:
-        self.eval_faster_rcnn.feature_extractor.load_state_dict(model_states['feature_extractor_model'])
-        self.eval_faster_rcnn.rpn.load_state_dict(model_states['rpn_model'])
-        self.eval_faster_rcnn.fast_rcnn.load_state_dict(model_states['fast_rcnn_model'])
+        self.eval_faster_rcnn.load_state_dict(model_states['faster_rcnn_model'])
         
         preds = list()
         target = list()

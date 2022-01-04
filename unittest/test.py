@@ -296,15 +296,21 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.faster_rcnn = FasterRCNN(config)
 
     def test_forward(self):
-        bboxes,labels,scores = self.faster_rcnn.predict(IMG)
+        for k,v in dict(self.faster_rcnn.named_parameters()).items():
+            print(k,v.shape)
+        
+        
+        #bboxes,labels,scores = self.faster_rcnn.predict(IMG)
+        
 
-unittest.skip('passed')    
+
+@unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)
@@ -315,7 +321,7 @@ class TestFasterRCNNTrainer(unittest.TestCase):
     def test_train(self):
         self.trainer.train()
 
-@unittest.skip('passed')
+unittest.skip('passed')
 class TestCheckPointTool(unittest.TestCase):
     def setUp(self):
         pass

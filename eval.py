@@ -52,7 +52,7 @@ def test():
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     faster_rcnn = FasterRCNN(config,device)
 
-    ckpt = load_checkpoint(config.PRETRAINED_MODEL_PATH,load_best=True)
+    ckpt = load_checkpoint(config.FASTER_RCNN.PRETRAINED_MODEL_PATH,load_best=True)
     evaluator = FasterRCNNEvaluator(config,voc_dataset,device)
     map = evaluator.evaluate(ckpt)
     return map

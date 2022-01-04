@@ -71,7 +71,13 @@ class FasterRCNNTrainer:
         self.rpn_loss  = RPNLoss(train_config,device)   
         self.fast_rcnn_loss = FastRCNNLoss(train_config,device)
 
-        params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
+        
+        for key, value in self.faster_rcnn.named_parameters():
+            if value.requires_grad:
+                print(key, value.shape)
+        
+        params = list(self.faster_rcnn.parameters())
+
         self.optimizer = optim.SGD( params=params,
                                     lr=train_config.FASTER_RCNN.LEARNING_RATE,
                                     momentum=train_config.FASTER_RCNN.MOMENTUM,
@@ -188,9 +194,7 @@ class FasterRCNNTrainer:
             self.scheduler.step()  
 
             self.checkpoint = {
-                'feature_extractor_model':self.feature_extractor.state_dict(),
-                'rpn_model': self.rpn.state_dict(),
-                'fast_rcnn_model': self.fast_rcnn.state_dict(),
+                'faster_rcnn_model': self.faster_rcnn.state_dict(),
                 'epoch': epoch,
                 'steps': steps,
                 'optimizer': self.optimizer.state_dict(),
@@ -261,9 +265,7 @@ class FasterRCNNTrainer:
 
     def _resume(self):
         self.checkpoint = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
-        self.feature_extractor.load_state_dict(self.checkpoint['feature_extractor_model'])
-        self.rpn.load_state_dict(self.checkpoint['rpn_model'])
-        self.fast_rcnn.load_state_dict(self.checkpoint['fast_rcnn_model'])
+        self.faster_rcnn.load_state_dict(self.checkpoint['faster_rcnn_model'])
         self.optimizer.load_state_dict(self.checkpoint['optimizer'])
         self.scheduler.load_state_dict(self.checkpoint['scheduler'])
         start_epoch = self.checkpoint['epoch']

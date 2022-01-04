@@ -37,7 +37,6 @@ _C = ConfigNode()
 # ----------------------- TEST ----------------------------------------------------#
 _C.TEST = ConfigNode()
 
-
 # ----------------------- LOG ----------------------------------------------------- #
 _C.LOG = ConfigNode()
 _C.LOG.LOG_DIR = '/media/yan/D/ornot/workspace/object_detection/log'
@@ -115,11 +114,10 @@ _C.FASTER_RCNN.STEP_SIZE = 25
 _C.FASTER_RCNN.LEARNING_RATE_DECAY = 0.1
 _C.FASTER_RCNN.MOMENTUM = 0.9
 
-
 _C.FASTER_RCNN.RESUME = False
 _C.FASTER_RCNN.PRETRAINED_MODEL_PATH = None
 _C.FASTER_RCNN.CHECK_FREQUENCY = 100
-_C.FASTER_RCNN.RESUME = False
+
 
 def get_default_config():
     """
