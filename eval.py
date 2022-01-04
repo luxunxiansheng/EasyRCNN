@@ -54,7 +54,7 @@ def test():
 
     ckpt = load_checkpoint(config.FASTER_RCNN.PRETRAINED_MODEL_PATH,load_best=True)
     evaluator = FasterRCNNEvaluator(config,voc_dataset,device)
-    map = evaluator.evaluate(ckpt)
+    map = evaluator.evaluate(ckpt['faster_rcnn_model'])
     return map
 
 if __name__=="__main__":

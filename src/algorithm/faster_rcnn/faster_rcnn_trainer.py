@@ -24,6 +24,8 @@
 # #### END LICENSE BLOCK #####
 # /
 
+import copy
+
 from albumentations.augmentations.geometric.functional import scale
 from tqdm import tqdm
 
@@ -70,15 +72,8 @@ class FasterRCNNTrainer:
         self.proposal_target_creator = ProposalTargetCreator(train_config)
         self.rpn_loss  = RPNLoss(train_config,device)   
         self.fast_rcnn_loss = FastRCNNLoss(train_config,device)
-
         
-        for key, value in self.faster_rcnn.named_parameters():
-            if value.requires_grad:
-                print(key, value.shape)
-        
-        params = list(self.faster_rcnn.parameters())
-
-        self.optimizer = optim.SGD( params=params,
+        self.optimizer = optim.SGD( self.faster_rcnn.parameters(),
                                     lr=train_config.FASTER_RCNN.LEARNING_RATE,
                                     momentum=train_config.FASTER_RCNN.MOMENTUM,
                                     weight_decay=train_config.FASTER_RCNN.WEIGHT_DECAY)
@@ -204,7 +199,7 @@ class FasterRCNNTrainer:
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
-                eval_result =self.evaluator.evaluate(self.checkpoint)
+                eval_result =self.evaluator.evaluate(copy.deepcopy(self.checkpoint['faster_rcnn_model']))
                 self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
@@ -259,7 +254,12 @@ class FasterRCNNTrainer:
                 self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
                 predicted_scores_for_img_0 = predicted_scores_batch[0]
-                map =self._evaluate_on_train_set(gt_bboxes, gt_labels, predicted_scores_for_img_0, predicted_labels_for_img_0, predicted_bboxes_for_img_0)
+                map =self._evaluate_on_train_set(gt_bboxes, 
+                                                gt_labels, 
+                                                predicted_scores_for_img_0, 
+                                                predicted_labels_for_img_0, 
+                                                predicted_bboxes_for_img_0)
+
                 self.writer.add_scalar('train/map',map['map'].item(),steps)
                 self.writer.add_scalar('train/map_50',map['map_50'].item(),steps)
 

@@ -116,9 +116,8 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
 
         super().__init__()
         
-        self.model = vgg16(pretrained=True)
-
-        feature_layer = list(self.model.features)[:30]
+        pretrained_model = vgg16(pretrained=True)
+        feature_layer = list(pretrained_model.features)[:30]
 
         assert feature_layer[0].in_channels == 3
         assert feature_layer[28].out_channels == 512
@@ -128,7 +127,7 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
             for p in layer.parameters():
                 p.requires_grad = False 
                 
-        self.feature_layer = nn.Sequential(*feature_layer)
+        self.model = nn.Sequential(*feature_layer)
     
     def predict(self,im_data:torch.Tensor)->torch.Tensor:
         """
