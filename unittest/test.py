@@ -117,7 +117,7 @@ class TestAnchorTargetCreator(unittest.TestCase):
     
     def test_anchor_target_creator_2226(self):
         self.voc_dataset = VOCDataset(config)
-        image,bboxes,lables,diff,img_file= self.voc_dataset[2225]
+        image,bboxes,lables,diff,img_id,scale= self.voc_dataset[2225]
         image = image.unsqueeze(0)
         feature = self.feature_extractor.predict(image.float())
         feature_height,feature_width = feature.shape[2:]
@@ -211,12 +211,13 @@ class TestVOCDataset(unittest.TestCase):
     def test_voc_dataset(self):
         print(self.voc_dataset.__len__())
         
-        image,bboxes,lables,diff,img_file= self.voc_dataset[1854]
+        image,bboxes,lables,diff,img_id,scale= self.voc_dataset[1854]
         print(image.shape)
         print(bboxes.shape)
         print(lables.shape)
         print(diff.shape)
-        print(img_file)
+        print(img_id)
+        print(scale)
 
         imgs = torch.zeros([1,3,image.shape[1],image.shape[2]])
             
@@ -295,7 +296,7 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-@unittest.skip('passed')
+unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.faster_rcnn = FasterRCNN(config)
@@ -303,7 +304,7 @@ class TestFasterRCNN(unittest.TestCase):
     def test_forward(self):
         bboxes,labels,scores = self.faster_rcnn.predict(IMG)
 
-@unittest.skip('passed')    
+unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
     def setUp(self):
         self.voc_dataset = VOCDataset(config)

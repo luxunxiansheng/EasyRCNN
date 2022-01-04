@@ -59,7 +59,7 @@ class FasterRCNNTrainer:
         self.eval_config = eval_config
         self.writer = writer
         self.device = device
-        self.epoches = train_config.FASTER_RCNN.TRAIN.EPOCHS
+        self.epoches = train_config.FASTER_RCNN.EPOCHS
         self.train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=True,num_workers=train_config.FASTER_RCNN.NUM_WORKERS)    
         self.faster_rcnn = FasterRCNN(train_config,device)
         self.feature_extractor = self.faster_rcnn.feature_extractor
@@ -73,15 +73,15 @@ class FasterRCNNTrainer:
 
         params = list(self.feature_extractor.parameters()) + list(self.rpn.parameters()) + list(self.fast_rcnn.parameters())
         self.optimizer = optim.SGD( params=params,
-                                    lr=train_config.FASTER_RCNN.TRAIN.LEARNING_RATE,
-                                    momentum=train_config.FASTER_RCNN.TRAIN.MOMENTUM,
-                                    weight_decay=train_config.FASTER_RCNN.TRAIN.WEIGHT_DECAY)
+                                    lr=train_config.FASTER_RCNN.LEARNING_RATE,
+                                    momentum=train_config.FASTER_RCNN.MOMENTUM,
+                                    weight_decay=train_config.FASTER_RCNN.WEIGHT_DECAY)
         self.scheduler = StepLR(self.optimizer,
-                                step_size=train_config.FASTER_RCNN.TRAIN.STEP_SIZE,
-                                gamma=train_config.FASTER_RCNN.TRAIN.LEARNING_RATE_DECAY)
+                                step_size=train_config.FASTER_RCNN.STEP_SIZE,
+                                gamma=train_config.FASTER_RCNN.LEARNING_RATE_DECAY)
         self.metric = MAP()
 
-        self.resume = train_config.FASTER_RCNN.TRAIN.RESUME
+        self.resume = train_config.FASTER_RCNN.RESUME
         self.checkpoint_path = train_config.CHECKPOINT.CHECKPOINT_PATH
         self.checkpoint = None
         
@@ -170,7 +170,6 @@ class FasterRCNNTrainer:
                     
                     total_roi_cls_loss = total_roi_cls_loss + roi_cls_loss
                     total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
-
                 
                 total_loss = total_rpn_cls_loss + \
                                 total_rpn_reg_loss+ \
@@ -181,7 +180,7 @@ class FasterRCNNTrainer:
                 total_loss.backward()                    
                 self.optimizer.step()
 
-                if steps%self.train_config.FASTER_RCNN.TRAIN.CHECK_FREQUENCY==0:
+                if steps%self.train_config.FASTER_RCNN.CHECK_FREQUENCY==0:
                     self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch,img_height, img_width, gt_bboxes, gt_labels)
                 steps += 1
             
