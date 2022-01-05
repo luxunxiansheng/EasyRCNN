@@ -183,6 +183,7 @@ class FasterRCNNTrainer:
 
                 if steps%self.train_config.FASTER_RCNN.CHECK_FREQUENCY==0:
                     self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch,img_height, img_width, gt_bboxes, gt_labels)
+                
                 steps += 1
             
             # adjust the learning rate if necessary
@@ -199,7 +200,7 @@ class FasterRCNNTrainer:
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
-                eval_result =self.evaluator.evaluate(copy.deepcopy(self.checkpoint['faster_rcnn_model']))
+                eval_result =self.evaluator.evaluate(self.checkpoint['faster_rcnn_model'])
                 self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
@@ -207,6 +208,7 @@ class FasterRCNNTrainer:
                 if eval_result['map_50'].item() > self.best_map_50:
                     is_best = True
                     self.best_map_50 = eval_result['map_50'].item()
+                    print('Best map_50: {}'.format(self.best_map_50))
 
             # save a checkpoint for current epoch. If it is better than the best model so far, save it as the best model
             save_checkpoint(self.checkpoint, self.checkpoint_path, is_best=is_best)
@@ -219,14 +221,13 @@ class FasterRCNNTrainer:
                         labels_batch,
                         img_height,
                         img_width,
-                        gt_bboxes,
-                        gt_labels):
+                    ):
 
         self.writer.add_scalar('total_loss',total_loss.item(),steps)
         self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 
         with torch.no_grad():
-            predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.faster_rcnn.predict(images_batch.float())
+            predicted_labels_batch, _,predicted_bboxes_batch = self.faster_rcnn.predict(images_batch.float())
                         
             predicted_labels_for_img_0 = predicted_labels_batch[0]
             predicted_label_names_for_img_0 = []
@@ -253,15 +254,6 @@ class FasterRCNNTrainer:
 
                 self.writer.add_images('predicted_boxes',img_and_predicted_bboxes.unsqueeze(0),steps)
 
-                predicted_scores_for_img_0 = predicted_scores_batch[0]
-                map =self._evaluate_on_train_set(gt_bboxes, 
-                                                gt_labels, 
-                                                predicted_scores_for_img_0, 
-                                                predicted_labels_for_img_0, 
-                                                predicted_bboxes_for_img_0)
-
-                self.writer.add_scalar('train/map',map['map'].item(),steps)
-                self.writer.add_scalar('train/map_50',map['map_50'].item(),steps)
 
     def _resume(self):
         self.checkpoint = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
@@ -307,6 +299,9 @@ class FasterRCNNTrainer:
             - mar_100_per_class: ``torch.Tensor`` (-1 if class metrics are disabled)
 
         """
+
+        
+
         preds = [dict(
                     # convert yxyx to xyxy
                     boxes = predicted_bboxes[:,[1,0,3,2]].float(),
@@ -320,7 +315,9 @@ class FasterRCNNTrainer:
                     )]  
 
         self.metric.update(preds,target)
-        return self.metric.compute()
+        result = self.metric.compute()
+        print(result['map_50'])
+        return result
 
 
 

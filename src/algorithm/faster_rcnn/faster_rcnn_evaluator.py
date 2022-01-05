@@ -49,13 +49,12 @@ class FasterRCNNEvaluator(object):
 
         self.metric = MAP()
 
-    def evaluate(self,model_states) -> float:
+    def evaluate(self,model_states) -> float:    
+        self.metric.reset()
         self.eval_faster_rcnn.load_state_dict(model_states)
-        
-        preds = list()
-        target = list()
-        
-        for _,(images_batch,bboxes_batch,labels_batch,_,_,_) in tqdm(enumerate(self.dataloader)):
+
+        for _,(images_batch,bboxes_batch,labels_batch,_,img_id,_) in tqdm(enumerate(self.dataloader)):
+            
             images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
             with torch.no_grad():
                 predicted_labels_batch, predicted_scores_batch,predicted_bboxes_batch = self.eval_faster_rcnn.predict(images_batch.float())
@@ -67,21 +66,23 @@ class FasterRCNNEvaluator(object):
                 gt_bboxes = bboxes_batch[img_idx]
                 gt_labels = labels_batch[img_idx]
 
-                single_image_predict_dict = dict(
+                single_image_predict = [dict(
                                             # convert yxyx to xyxy
                                             boxes = pred_bboxes[:,[1,0,3,2]].float(),
                                             scores = pred_scores,
                                             labels = pred_labels,
-                                            )
-                preds.append(single_image_predict_dict)
+                                            )]
+            
 
-                single_image_gt_dict = dict(
+                single_image_gt = [dict(
                                             boxes = gt_bboxes[:,[1,0,3,2]],
                                             labels = gt_labels,
-                                            )
+                                            )]
 
-                target.append(single_image_gt_dict)
-
-        self.metric.update(preds,target)
+                
+                self.metric.update(single_image_predict,single_image_gt)
+                img_map=self.metric.compute()
+                print(img_map['map_50'])            
+            
         return self.metric.compute()
                         

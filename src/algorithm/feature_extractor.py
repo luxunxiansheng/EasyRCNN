@@ -57,9 +57,6 @@ class VGG16FeatureExtractor(nn.Module):
                                     CNNBlock(128, 128, 3, same_padding=True, bn=bn),
                                     nn.MaxPool2d(2))
 
-        self.set_trainable(self.conv1, requires_grad=False)
-        self.set_trainable(self.conv2, requires_grad=False)
-
         self.conv3 = nn.Sequential( CNNBlock(128, 256, 3, same_padding=True, bn=bn),
                                     CNNBlock(256, 256, 3, same_padding=True, bn=bn),
                                     CNNBlock(256, 256, 3, same_padding=True, bn=bn),
@@ -96,12 +93,6 @@ class VGG16FeatureExtractor(nn.Module):
         """
 
         return self.forward(im_data)
-
-
-    @staticmethod
-    def set_trainable( model, requires_grad):
-        for p in model.parameters():
-            p.requires_grad = requires_grad
 
 
 class PretrainedVGG16FeatureExtractor(nn.Module):
@@ -147,7 +138,7 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
         """         
         transform=T.Compose([T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])    
         im_data = transform(im_data/255.0)
-        x = self.feature_layer(im_data)
+        x = self.model(im_data)
         return x
         
 
