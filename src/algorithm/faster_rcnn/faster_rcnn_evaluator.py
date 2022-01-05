@@ -73,13 +73,10 @@ class FasterRCNNEvaluator(object):
                                             labels = pred_labels,
                                             )]
             
+                single_image_gt = [dict(boxes = gt_bboxes[:,[1,0,3,2]],
+                                        labels = gt_labels,
+                                        )]
 
-                single_image_gt = [dict(
-                                            boxes = gt_bboxes[:,[1,0,3,2]],
-                                            labels = gt_labels,
-                                            )]
-
-                
                 self.metric.update(single_image_predict,single_image_gt)
                 img_map=self.metric.compute()
                 print(img_map['map_50'])            

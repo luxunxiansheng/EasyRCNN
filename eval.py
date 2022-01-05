@@ -46,13 +46,13 @@ from checkpoint_tool import load_checkpoint
 def test():
     torch.manual_seed(0)
     
-    config_path = work_folder+'/src/config/eval/eval.yaml'
-    config = combine_configs(config_path)
-    voc_dataset = VOCDataset(config,split='test')
+    test_config_path = work_folder+'/src/config/eval/eval.yaml'
+    config = combine_configs(test_config_path)
+    test_voc_dataset = VOCDataset(config,split='test')
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     ckpt = load_checkpoint(config.FASTER_RCNN.PRETRAINED_MODEL_PATH,load_best=True)
-    evaluator = FasterRCNNEvaluator(config,voc_dataset,device)
+    evaluator = FasterRCNNEvaluator(config,test_voc_dataset,device)
     map = evaluator.evaluate(ckpt['faster_rcnn_model'])
     return map
 

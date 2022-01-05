@@ -84,7 +84,7 @@ class FasterRCNNTrainer:
 
         self.resume = train_config.FASTER_RCNN.RESUME
         self.checkpoint_path = train_config.CHECKPOINT.CHECKPOINT_PATH
-        self.checkpoint = None
+        
         
         if eval_config is not None:
             self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,device)
@@ -188,19 +188,13 @@ class FasterRCNNTrainer:
             
             # adjust the learning rate if necessary
             self.scheduler.step()  
-
-            self.checkpoint = {
-                'faster_rcnn_model': self.faster_rcnn.state_dict(),
-                'epoch': epoch,
-                'steps': steps,
-                'optimizer': self.optimizer.state_dict(),
-                'scheduler': self.scheduler.state_dict()
-                }
+            
+            print(self.faster_rcnn.state_dict())
             
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
-                eval_result =self.evaluator.evaluate(self.checkpoint['faster_rcnn_model'])
+                eval_result =self.evaluator.evaluate(copy.deepcopy(self.faster_rcnn.state_dict()))
                 self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
@@ -208,10 +202,16 @@ class FasterRCNNTrainer:
                 if eval_result['map_50'].item() > self.best_map_50:
                     is_best = True
                     self.best_map_50 = eval_result['map_50'].item()
-                    print('Best map_50: {}'.format(self.best_map_50))
-
-            # save a checkpoint for current epoch. If it is better than the best model so far, save it as the best model
-            save_checkpoint(self.checkpoint, self.checkpoint_path, is_best=is_best)
+                    
+            checkpoint = {
+                'faster_rcnn_model': self.faster_rcnn.state_dict(),
+                'epoch': epoch,
+                'steps': steps,
+                'optimizer': self.optimizer.state_dict(),
+                'scheduler': self.scheduler.state_dict()
+                }
+            
+            save_checkpoint(checkpoint,self.checkpoint_path, is_best=is_best)
 
     def _check_progress(self, 
                         steps, 
