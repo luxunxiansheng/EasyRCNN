@@ -43,6 +43,12 @@ from config import combine_configs
 
 if __name__=="__main__":
     torch.manual_seed(0)
+    
+    
+    os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
+    torch.cuda.empty_cache()
+
     train_config_path = work_folder+'/src/config/train/experiments/exp01_config.yaml'
     train_config = combine_configs(train_config_path)
     train_voc_dataset = VOCDataset(train_config)

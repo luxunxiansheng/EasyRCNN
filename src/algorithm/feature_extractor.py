@@ -108,6 +108,10 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
         super().__init__()
         
         pretrained_model = vgg16(pretrained=True)
+        del pretrained_model.features[30]
+        del pretrained_model.avgpool
+        del pretrained_model.classifier   
+    
         feature_layer = list(pretrained_model.features)[:30]
 
         assert feature_layer[0].in_channels == 3

@@ -35,6 +35,8 @@ from yacs.config import CfgNode
 
 from faster_rcnn.faster_rcnn_network import FasterRCNN
 
+
+
 class FasterRCNNEvaluator(object):
     def __init__(self,
                 config:CfgNode,
@@ -49,7 +51,7 @@ class FasterRCNNEvaluator(object):
 
         self.metric = MAP()
 
-    def evaluate(self,model_states) -> float:    
+    def evaluate(self,model_states):    
         self.metric.reset()
         self.eval_faster_rcnn.load_state_dict(model_states)
 
@@ -78,8 +80,6 @@ class FasterRCNNEvaluator(object):
                                         )]
 
                 self.metric.update(single_image_predict,single_image_gt)
-                img_map=self.metric.compute()
-                print(img_map['map_50'])            
-            
+
         return self.metric.compute()
                         

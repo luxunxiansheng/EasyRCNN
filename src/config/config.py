@@ -118,6 +118,12 @@ _C.FASTER_RCNN.RESUME = False
 _C.FASTER_RCNN.PRETRAINED_MODEL_PATH = None
 _C.FASTER_RCNN.CHECK_FREQUENCY = 100
 
+# ----------------------- R-FCN ----------------------------------------#
+_C.R_FCN = ConfigNode()
+_C.R_FCN.POOL_SIZE = 7
+_C.R_FCN.NUM_CLASSES = 20
+_C.R_FCN.FEATURE_STRIDE = 16
+_C.R_FCN.IN_CHANNELS = _C.RPN.FEATURE_CHANNELS
 
 def get_default_config():
     """

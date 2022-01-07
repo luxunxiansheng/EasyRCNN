@@ -182,15 +182,13 @@ class FasterRCNNTrainer:
                 self.optimizer.step()
 
                 if steps%self.train_config.FASTER_RCNN.CHECK_FREQUENCY==0:
-                    self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch,img_height, img_width, gt_bboxes, gt_labels)
+                    self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch,img_height, img_width)
                 
                 steps += 1
             
             # adjust the learning rate if necessary
             self.scheduler.step()  
-            
-            print(self.faster_rcnn.state_dict())
-            
+                        
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
@@ -263,62 +261,4 @@ class FasterRCNNTrainer:
         start_epoch = self.checkpoint['epoch']
         steps = self.checkpoint['steps']
         return steps,start_epoch
-
-    def _evaluate_on_train_set(self, 
-                gt_bboxes:torch.Tensor, 
-                gt_labels:torch.Tensor, 
-                predicted_scores:torch.Tensor, 
-                predicted_labels:torch.Tensor,
-                predicted_bboxes:torch.Tensor)->float:
-        """
-        Evaluate the model on one single train image .
-
-        Args:
-            gt_bboxes: (N,4)
-            gt_labels: (N,)
-            predicted_scores: (N,)
-            predicted_labels: (N,)
-            predicted_bboxes: (N,4)
-
-        Returns:
-            dict containing
-
-            - map: ``torch.Tensor``
-            - map_50: ``torch.Tensor``
-            - map_75: ``torch.Tensor``
-            - map_small: ``torch.Tensor``
-            - map_medium: ``torch.Tensor``
-            - map_large: ``torch.Tensor``
-            - mar_1: ``torch.Tensor``
-            - mar_10: ``torch.Tensor``
-            - mar_100: ``torch.Tensor``
-            - mar_small: ``torch.Tensor``
-            - mar_medium: ``torch.Tensor``
-            - mar_large: ``torch.Tensor``
-            - map_per_class: ``torch.Tensor`` (-1 if class metrics are disabled)
-            - mar_100_per_class: ``torch.Tensor`` (-1 if class metrics are disabled)
-
-        """
-
-        
-
-        preds = [dict(
-                    # convert yxyx to xyxy
-                    boxes = predicted_bboxes[:,[1,0,3,2]].float(),
-                    scores = predicted_scores,
-                    labels = predicted_labels,
-                    )]
-        
-        target = [dict(
-                    boxes = gt_bboxes[:,[1,0,3,2]],
-                    labels = gt_labels,
-                    )]  
-
-        self.metric.update(preds,target)
-        result = self.metric.compute()
-        print(result['map_50'])
-        return result
-
-
-
 
