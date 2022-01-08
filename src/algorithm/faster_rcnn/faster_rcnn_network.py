@@ -147,6 +147,8 @@ class FasterRCNN(nn.Module):
         std  = self.offset_norm_std.repeat(self.n_class+1)[None]
 
         predicted_roi_loc = predicted_roi_loc * std + mean
+
+        
         
         # post processing 
         predicted_roi_bboxes = LocationUtility.offset2bbox(proposed_roi_bboxes,predicted_roi_loc)

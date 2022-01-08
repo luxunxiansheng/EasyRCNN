@@ -73,10 +73,12 @@ class FasterRCNNTrainer:
         self.rpn_loss  = RPNLoss(train_config,device)   
         self.fast_rcnn_loss = FastRCNNLoss(train_config,device)
         
+        
         self.optimizer = optim.SGD( self.faster_rcnn.parameters(),
                                     lr=train_config.FASTER_RCNN.LEARNING_RATE,
                                     momentum=train_config.FASTER_RCNN.MOMENTUM,
                                     weight_decay=train_config.FASTER_RCNN.WEIGHT_DECAY)
+
         self.scheduler = StepLR(self.optimizer,
                                 step_size=train_config.FASTER_RCNN.STEP_SIZE,
                                 gamma=train_config.FASTER_RCNN.LEARNING_RATE_DECAY)
