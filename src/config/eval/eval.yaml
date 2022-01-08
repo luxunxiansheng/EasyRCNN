@@ -4,10 +4,10 @@ RPN:
         N_POST_NMS: 300
 
 FASTER_RCNN:
-    SCORE_THRESHOLD : 0.03
+    SCORE_THRESHOLD : 0.05
     NUM_WORKERS : 8
     PRETRAINED_MODEL_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01'
 
-
-
+VOC_DATASET:
+    AUGMENTED: False
 

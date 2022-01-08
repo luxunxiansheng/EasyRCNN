@@ -26,15 +26,13 @@
 
 import os
 import xml.etree.ElementTree as ET
-from albumentations.augmentations.geometric.resize import SmallestMaxSize
-from albumentations.pytorch.transforms import ToTensor
 
+import albumentations as A
+import cv2
 import torch
 import torch.utils.data as data
-import albumentations as A
+from albumentations.augmentations.geometric.resize import (LongestMaxSize,SmallestMaxSize)
 from albumentations.pytorch import ToTensorV2
-
-import cv2
 
 
 class VOCDataset(data.Dataset):
@@ -66,6 +64,7 @@ class VOCDataset(data.Dataset):
                 config,
                 split='trainval',                
                 ):
+        self.config = config
         self.data_dir = config.VOC_DATASET.DATA_DIR
         self.use_difficult = config.VOC_DATASET.USE_DIFFICULT_LABEL
         self.ids = list()
@@ -77,13 +76,30 @@ class VOCDataset(data.Dataset):
 
         self.augmented = config.VOC_DATASET.AUGMENTED
 
-        self.transforms = A.Compose([
-                                    #A.HorizontalFlip(p=0.5),
-                                    A.SmallestMaxSize(600,always_apply=True),
+        self.flip_transforms = A.Compose([
+                                    A.HorizontalFlip(p=0.5),
+                                    
+                                    
                                     ],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
+
+        self.scale_smallest_max_size = A.Compose([
+                                    SmallestMaxSize(config.VOC_DATASET.MIN_SIZE, always_apply=True),
+                                    
+                                    ],
+                                    bbox_params=A.BboxParams(format='pascal_voc',
+                                                            label_fields=['category_id']))       
+
+        self.scale_longest_max_size =  A.Compose([
+                                    LongestMaxSize(config.VOC_DATASET.MAX_SIZE, always_apply=True),
+                                    
+                                    ],
+                                    bbox_params=A.BboxParams(format='pascal_voc',
+                                                            label_fields=['category_id'])) 
+
         self.toTensor = ToTensorV2()
+        
     
     
     def get_label_names(self):
@@ -117,15 +133,25 @@ class VOCDataset(data.Dataset):
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+        scale_smallest_max_size = self.scale_smallest_max_size(image=image,bboxes=bboxes,category_id=category_id)
+        image = scale_smallest_max_size['image']
+        bboxes = scale_smallest_max_size['bboxes']
+        category_id = scale_smallest_max_size['category_id']
+    
+        if max(image.shape[0], image.shape[1]) > self.config.VOC_DATASET.MAX_SIZE:
+            scale_longest_max_size = self.scale_longest_max_size(image=image,bboxes=bboxes,category_id=category_id)
+            image = scale_longest_max_size['image']
+            bboxes = scale_longest_max_size['bboxes']
+            category_id = scale_longest_max_size['category_id']
+
         if self.augmented:
-            augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
-            image = augmented['image']
-            bboxes = augmented['bboxes']
-            category_id = augmented['category_id']
+            flip_augmented = self.flip_transforms(image=image, bboxes=bboxes, category_id=category_id)
+            image = flip_augmented['image']
+            bboxes = flip_augmented['bboxes']
+            category_id = flip_augmented['category_id']
         
         # HWC->CHW  
         image = self.toTensor(image=image)['image']
-        
         bboxes = torch.tensor(bboxes,dtype=torch.float32)[:,[1,0,3,2]]     
         category_id = torch.tensor(category_id,dtype=torch.long)
         difficult = torch.tensor(difficult, dtype=torch.uint8)
