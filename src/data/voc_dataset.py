@@ -79,7 +79,6 @@ class VOCDataset(data.Dataset):
         self.flip_transforms = A.Compose([
                                     A.HorizontalFlip(p=0.5),
                                     
-                                    
                                     ],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))

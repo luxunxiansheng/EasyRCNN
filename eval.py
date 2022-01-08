@@ -37,7 +37,6 @@ sys.path.append(work_folder+'/src/tool')
 
 import torch
 from faster_rcnn.faster_rcnn_evaluator import FasterRCNNEvaluator
-from faster_rcnn.faster_rcnn_network import FasterRCNN
 from voc_dataset import VOCDataset
 from config import combine_configs
 from checkpoint_tool import load_checkpoint
