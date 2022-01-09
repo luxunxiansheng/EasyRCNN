@@ -106,7 +106,7 @@ class FasterRCNN(nn.Module):
                                                                 feature_height,
                                                                 feature_width)
 
-            bboxes, labels, scores = self.detect(feature, 
+            bboxes ,labels, scores = self.detect(feature, 
                                                 proposed_roi_bboxes, 
                                                 img_height, 
                                                 img_width,
@@ -158,7 +158,7 @@ class FasterRCNN(nn.Module):
 
         prob = F.softmax(predicted_roi_score,dim=1)
 
-        bboxes, labels, scores = self._suppress(predicted_roi_bboxes, 
+        bboxes,labels, scores= self._suppress(predicted_roi_bboxes, 
                                                     prob,
                                                     score_threshold,
                                                     nms_threshold)
@@ -198,4 +198,4 @@ class FasterRCNN(nn.Module):
             labels = torch.empty((0,), device=self.device)
             scores = torch.empty((0,), device=self.device)
 
-        return labels, scores, bboxes  
+        return bboxes,labels, scores 

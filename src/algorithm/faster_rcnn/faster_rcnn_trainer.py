@@ -227,7 +227,7 @@ class FasterRCNNTrainer:
         self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 
         with torch.no_grad():
-            predicted_labels_batch, _,predicted_bboxes_batch = self.faster_rcnn.predict(images_batch.float())
+            predicted_bboxes_batch, predicted_labels_batch, _,= self.faster_rcnn.predict(images_batch.float())
                         
             predicted_labels_for_img_0 = predicted_labels_batch[0]
             predicted_label_names_for_img_0 = []

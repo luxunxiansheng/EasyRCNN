@@ -30,6 +30,8 @@ from random import sample
 import sys
 from datetime import datetime
 
+from torchmetrics.detection.map import MAP
+
 
 
 current_dir= os.path.dirname(os.path.realpath(__file__))
@@ -197,7 +199,7 @@ class TestRPNLoss(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestVOCDataset(unittest.TestCase):
     def setUp(self) -> None:
         self.voc_dataset = VOCDataset(config)
@@ -299,17 +301,54 @@ class TestFastRCNN(unittest.TestCase):
 unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
-        self.faster_rcnn = FasterRCNN(config)
+        train_config_path = work_folder+'/src/config/train/experiments/exp01_config.yaml'
+        train_config = combine_configs(train_config_path)
+        self.train_voc_dataset = VOCDataset(train_config)
+        self.faster_rcnn = FasterRCNN(train_config)
 
+        ckpt = load_checkpoint('/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01',load_best=True)
+        self.faster_rcnn.load_state_dict(ckpt['faster_rcnn_model'])
+    
+    @unittest.skip('passed')
     def test_forward(self):
         for k,v in dict(self.faster_rcnn.named_parameters()).items():
-            if v.requires_grad:
+            #if v.requires_grad:
                 print(k,v.shape)
+    
+    
+    def test_predict(self):
         
-        
-        #bboxes,labels,scores = self.faster_rcnn.predict(IMG)
-        
+        images_batch,bboxes_batch,labels_batch,_,ids,scales=self.train_voc_dataset[1234]
+        images_batch = images_batch.unsqueeze(0)
+        gt_bboxes = bboxes_batch
+        gt_labels = labels_batch
 
+        
+        pred_bboxes,pred_labels, pred_scores= self.faster_rcnn.predict(images_batch.float())
+        pred_bboxes = pred_bboxes[0]
+        pred_labels = pred_labels[0]
+        pred_scores = pred_scores[0]
+
+
+        single_image_predict = [dict(
+                                            # convert yxyx to xyxy
+                                            boxes = pred_bboxes[:,[1,0,3,2]].float(),
+                                            scores = pred_scores,
+                                            labels = pred_labels,
+                                            )]
+            
+        single_image_gt = [dict(boxes = gt_bboxes[:,[1,0,3,2]],
+                                        labels = gt_labels,
+                                        )]
+
+        metric = MAP()
+        metric.update(single_image_predict,single_image_gt)
+        result=metric.compute()
+        print(result['map_50'].item())
+        print("done")
+
+
+        
 
 @unittest.skip('passed')    
 class TestFasterRCNNTrainer(unittest.TestCase):
