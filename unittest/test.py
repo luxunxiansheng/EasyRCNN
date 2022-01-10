@@ -214,12 +214,7 @@ class TestVOCDataset(unittest.TestCase):
         print(self.voc_dataset.__len__())
         
         image,bboxes,lables,diff,img_id,scale= self.voc_dataset[1854]
-        print(image.shape)
-        print(bboxes.shape)
-        print(lables.shape)
-        print(diff.shape)
-        print(img_id)
-        print(scale)
+    
 
         imgs = torch.zeros([1,3,image.shape[1],image.shape[2]])
             
@@ -301,6 +296,8 @@ class TestFastRCNN(unittest.TestCase):
 unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
+        self.writer = SummaryWriter(config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+
         train_config_path = work_folder+'/src/config/train/experiments/exp01_config.yaml'
         train_config = combine_configs(train_config_path)
         self.train_voc_dataset = VOCDataset(train_config)
@@ -317,17 +314,27 @@ class TestFasterRCNN(unittest.TestCase):
     
     
     def test_predict(self):
-        
-        images_batch,bboxes_batch,labels_batch,_,ids,scales=self.train_voc_dataset[1234]
-        images_batch = images_batch.unsqueeze(0)
-        gt_bboxes = bboxes_batch
-        gt_labels = labels_batch
+        image,bboxes,lables,diff,img_id,scale= self.train_voc_dataset[2119]
+        imgs = torch.zeros([1,3,image.shape[1],image.shape[2]])
+            
+        lable_names = [VOCDataset.VOC_BBOX_LABEL_NAMES[i] for i in lables]
+        img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=bboxes,labels=lable_names,resize_shape=(image.shape[1],image.shape[2]))
+        imgs[0,:,:,:] = img_and_bbox
+
+        self.writer.add_images('image',imgs,) 
 
         
-        pred_bboxes,pred_labels, pred_scores= self.faster_rcnn.predict(images_batch.float())
+        pred_bboxes,pred_labels, pred_scores= self.faster_rcnn.predict(image.unsqueeze(0).float())
         pred_bboxes = pred_bboxes[0]
         pred_labels = pred_labels[0]
         pred_scores = pred_scores[0]
+
+        lable_names = [VOCDataset.VOC_BBOX_LABEL_NAMES[i] for i in pred_labels]
+        pred_img_and_bbox = draw_img_bboxes_labels(image=image, bboxes=pred_bboxes,labels=lable_names,resize_shape=(image.shape[1],image.shape[2]))
+        imgs[0,:,:,:] = pred_img_and_bbox
+
+        self.writer.add_images('pred_image',imgs,) 
+
 
 
         single_image_predict = [dict(
@@ -337,8 +344,8 @@ class TestFasterRCNN(unittest.TestCase):
                                             labels = pred_labels,
                                             )]
             
-        single_image_gt = [dict(boxes = gt_bboxes[:,[1,0,3,2]],
-                                        labels = gt_labels,
+        single_image_gt = [dict(boxes = bboxes[:,[1,0,3,2]],
+                                        labels = lables,
                                         )]
 
         metric = MAP()
@@ -346,8 +353,6 @@ class TestFasterRCNN(unittest.TestCase):
         result=metric.compute()
         print(result['map_50'].item())
         print("done")
-
-
         
 
 @unittest.skip('passed')    

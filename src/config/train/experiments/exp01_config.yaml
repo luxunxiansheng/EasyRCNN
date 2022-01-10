@@ -2,9 +2,9 @@ FASTER_RCNN:
   NUM_WORKERS: 2
   
   CHECK_FREQUENCY: 500
-  EPOCHS: 14
+  EPOCHS: 30
   RESUME: False
-  STEP_SIZE: 9
+  STEP_SIZE: 10
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/model_checkpoint.ckpt'
