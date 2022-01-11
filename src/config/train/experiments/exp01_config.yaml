@@ -2,10 +2,10 @@ FASTER_RCNN:
   NUM_WORKERS: 2
   
   CHECK_FREQUENCY: 500
-  EPOCHS: 30
+  EPOCHS: 14
   RESUME: False
-  STEP_SIZE: 6
-  LEARNING_RATE_DECAY: 0.8
+  STEP_SIZE: 9
+  LEARNING_RATE_DECAY: 0.1
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/model_checkpoint.ckpt'

@@ -42,6 +42,21 @@ from rpn.region_proposal_network import RPN
 from location_utility import LocationUtility
 
 class FasterRCNN(nn.Module):
+    #*******************************************************************************
+    #  Advances in Neural Information Processing Systems 28 (NIPS 2015) Shaoqing Ren, 
+    #  Kaiming He, Ross Girshick, Jian Sun   https://arxiv.org/abs/1512.02325
+    # 
+    #  Psudo code:
+    #  _________________________________________________________
+    # feature_maps = process(image)
+    #  ROIs = region_proposal(feature_maps)
+    #  for ROI in ROIs
+    #       patch = roi_pooling(feature_maps, ROI)
+    #       class_scores, box = detector(patch)
+    #       class_probabilities = softmax(class_scores)
+    #  _________________________________________________________
+    #********************************************************************************
+
     def __init__(self,
                 config:CfgNode,
                 device:Device='cpu'):

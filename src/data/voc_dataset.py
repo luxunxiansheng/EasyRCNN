@@ -78,7 +78,7 @@ class VOCDataset(data.Dataset):
 
         self.transforms = A.Compose([
                                     A.HorizontalFlip(p=0.5),
-                                    
+                                    A.ShiftScaleRotate(p=0.5),
                                     ],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
@@ -132,6 +132,13 @@ class VOCDataset(data.Dataset):
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+        if self.augmented:
+            flip_augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
+            image = flip_augmented['image']
+            bboxes = flip_augmented['bboxes']
+            category_id = flip_augmented['category_id']
+
+
         # ** resize the smallest side to the min size ** 
         scale_smallest_max_size = self.scale_smallest_max_size(image=image,bboxes=bboxes,category_id=category_id)
         image = scale_smallest_max_size['image']
@@ -146,11 +153,8 @@ class VOCDataset(data.Dataset):
             bboxes = scale_longest_max_size['bboxes']
             category_id = scale_longest_max_size['category_id']
         
-        if self.augmented:
-            flip_augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
-            image = flip_augmented['image']
-            bboxes = flip_augmented['bboxes']
-            category_id = flip_augmented['category_id']
+        
+        
         
         # HWC->CHW  
         image = self.toTensor(image=image)['image']

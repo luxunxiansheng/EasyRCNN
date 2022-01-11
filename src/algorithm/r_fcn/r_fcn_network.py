@@ -26,17 +26,18 @@
 
 import torch
 from torch import nn
+from torch.nn import functional as F
 from torch.types import Device
 from torchvision.ops import PSRoIPool
-
 from yacs.config import CfgNode
+
 from common import CNNBlock
 from feature_extractor import FeatureExtractorFactory
+from location_utility import LocationUtility
+from position_sensitive_fcn.position_senstive_network_loss import PositionSensitiveNetworkLoss
 from rpn.anchor_creator import AnchorCreator
 from rpn.proposal_creator import ProposalCreator
-
 from rpn.region_proposal_network import RPN
-from location_utility import LocationUtility
 
 class RFCN(nn.module):
     """
@@ -61,25 +62,22 @@ class RFCN(nn.module):
         super().__init__()
         self.config = config
         self.device = device
-        self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.FASTER_RCNN.FEATRUE_EXTRACTOR).to(device)
+        self.feature_extractor = FeatureExtractorFactory.create_feature_extractor(config.R_FCN.FEATRUE_EXTRACTOR).to(device)
         self.rpn = RPN(config).to(device)
-
-        self.double_channel_conv = CNNBlock(config.R_FCN.IN_CHANNELS,2*config.R_FCN.IN_CHANNELS,1)
     
-        self.rfcn_bbox_conv =CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1),1)
-        self.ps_roi_pool_class = PSRoIPool(output_size=config.R_FCN.POOL_SIZE,
-                                    spatial_scale=1.0/config.R_FCN.FEATURE_STRIDE)
-
-        self.rfcn_score_conv = CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*8,1)
-        self.ps_roi_pool_score = PSRoIPool(output_size=config.R_FCN.POOL_SIZE,spatial_scale=1.0/config.R_FCN.FEATURE_STRIDE)
-        
-        self.n_class = config.R_FCN.NUM_CLASSES
         self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)
 
+        self.ps_net = PositionSensitiveNetworkLoss(config)
+
+        self.n_class = config.R_FCN.NUM_CLASSES
+
     
     def forward(self,image_batch):
+        #* 1. feature extraction        
         feature_batch= self.feature_extractor.predict(image_batch)
+
+        #* 2.  predicted offsets and class scores by rpn network
         rpn_predicted_score_batch,rpn_predicted_offset_batch = self.rpn.predict(feature_batch)
         
         bboxes_batch = list()
@@ -93,6 +91,7 @@ class RFCN(nn.module):
             rpn_predicted_scores = rpn_predicted_score_batch[image_index]
             rpn_predicted_offsets = rpn_predicted_offset_batch[image_index]
 
+            #* 3. generate the proposed roi bboxes
             anchors_of_img = self.anchor_creator.create(feature_height,feature_width)
             proposed_roi_bboxes =self.proposal_creator.create(anchors_of_img,
                                                                 rpn_predicted_scores,
@@ -101,7 +100,7 @@ class RFCN(nn.module):
                                                                 img_width,
                                                                 feature_height,
                                                                 feature_width)
-
+            #* 4. get the bboxes ,labels and scores based on the proposed roi bboxes
             bboxes, labels, scores = self.detect(feature, 
                                                 proposed_roi_bboxes, 
                                                 img_height, 
@@ -140,18 +139,16 @@ class RFCN(nn.module):
             scores (torch.Tensor): [n_bboxes,]
         """
 
-        double_channel_feature = self.double_channel_conv(feature)
-        r_score_map = self.rfcn_score_conv(double_channel_feature)
+        predicted_roi_score,predicted_roi_offset = self.ps_net.predict(feature, proposed_roi_bboxes)
 
-        predicted_roi_score,predicted_roi_loc= self.fast_rcnn.predict(feature,proposed_roi_bboxes)
 
         mean = self.offset_norm_mean.repeat(self.n_class+1)[None]
         std  = self.offset_norm_std.repeat(self.n_class+1)[None]
 
-        predicted_roi_loc = predicted_roi_loc * std + mean
+        predicted_roi_offset = predicted_roi_offset * std + mean
         
         # post processing 
-        predicted_roi_bboxes = LocationUtility.offset2bbox(proposed_roi_bboxes,predicted_roi_loc)
+        predicted_roi_bboxes = LocationUtility.offset2bbox(proposed_roi_bboxes,predicted_roi_offset)
             
         predicted_roi_bboxes[:,0::2] =(predicted_roi_bboxes[:,0::2]).clamp(min=0,max=img_height)
         predicted_roi_bboxes[:,1::2] =(predicted_roi_bboxes[:,1::2]).clamp(min=0,max=img_width)
