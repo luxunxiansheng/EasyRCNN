@@ -78,7 +78,7 @@ class VOCDataset(data.Dataset):
 
         self.transforms = A.Compose([
                                     A.HorizontalFlip(p=0.5),
-                                    A.ShiftScaleRotate(p=0.5),
+                                    
                                     ],
                                     bbox_params=A.BboxParams(format='pascal_voc',
                                                             label_fields=['category_id']))
@@ -133,10 +133,10 @@ class VOCDataset(data.Dataset):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         if self.augmented:
-            flip_augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
-            image = flip_augmented['image']
-            bboxes = flip_augmented['bboxes']
-            category_id = flip_augmented['category_id']
+            augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
+            image = augmented['image']
+            bboxes = augmented['bboxes']
+            category_id = augmented['category_id']
 
 
         # ** resize the smallest side to the min size ** 
@@ -153,12 +153,12 @@ class VOCDataset(data.Dataset):
             bboxes = scale_longest_max_size['bboxes']
             category_id = scale_longest_max_size['category_id']
         
-        
-        
-        
         # HWC->CHW  
         image = self.toTensor(image=image)['image']
-        bboxes = torch.tensor(bboxes,dtype=torch.float32)[:,[1,0,3,2]]     
+        bboxes = torch.tensor(bboxes,dtype=torch.float32)
+        if len(bboxes) > 0:
+            bboxes = bboxes[:,[1,0,3,2]] 
+        
         category_id = torch.tensor(category_id,dtype=torch.long)
         difficult = torch.tensor(difficult, dtype=torch.uint8)
         scale = image.shape[1]/original_height

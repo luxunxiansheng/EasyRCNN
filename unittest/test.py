@@ -26,13 +26,7 @@
 
 
 import os
-from random import sample
 import sys
-from datetime import datetime
-
-from torchmetrics.detection.map import MAP
-
-
 
 current_dir= os.path.dirname(os.path.realpath(__file__))
 work_folder=current_dir[:current_dir.find('unittest')]
@@ -40,6 +34,8 @@ sys.path.append(work_folder+'src/algorithm')
 sys.path.append(work_folder+'src/config')
 sys.path.append(work_folder+'src/data')
 sys.path.append(work_folder+'src/tool')
+
+from datetime import datetime
 
 import unittest
 
@@ -58,6 +54,8 @@ from fast_rcnn.fast_rcnn_network import FastRCNN
 from faster_rcnn.faster_rcnn_trainer import FasterRCNNTrainer
 from faster_rcnn.faster_rcnn_network import FasterRCNN
 from checkpoint_tool import load_checkpoint, save_checkpoint
+
+from torchmetrics.detection.map import MAP
 
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
