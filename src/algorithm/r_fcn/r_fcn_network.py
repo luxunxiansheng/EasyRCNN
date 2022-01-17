@@ -28,18 +28,18 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.types import Device
-from torchvision.ops import PSRoIPool
+from torchvision.ops import nms
+
 from yacs.config import CfgNode
 
-from common import CNNBlock
 from feature_extractor import FeatureExtractorFactory
 from location_utility import LocationUtility
-from position_sensitive_fcn.position_senstive_network_loss import PositionSensitiveNetworkLoss
+from position_sensitive_fcn.position_sensitive_network import PositionSensitiveNetwork
 from rpn.anchor_creator import AnchorCreator
 from rpn.proposal_creator import ProposalCreator
 from rpn.region_proposal_network import RPN
 
-class RFCN(nn.module):
+class RFCN(nn.Module):
     """
     R-FCN: Object Detection via Region-based Fully Convolutional Networks
     By Jifeng Dai, Yi Li, Kaiming He, Jian Sun
@@ -68,9 +68,12 @@ class RFCN(nn.module):
         self.anchor_creator = AnchorCreator(config,device=device)
         self.proposal_creator = ProposalCreator(config)
 
-        self.ps_net = PositionSensitiveNetworkLoss(config)
+        self.ps_net = PositionSensitiveNetwork(config).to(device)
 
         self.n_class = config.R_FCN.NUM_CLASSES
+
+        self.offset_norm_mean = torch.tensor(config.R_FCN.OFFSET_NORM_MEAN).to(device)
+        self.offset_norm_std =  torch.tensor(config.R_FCN.OFFSET_NORM_STD).to(device)
 
     
     def forward(self,image_batch):
@@ -162,3 +165,37 @@ class RFCN(nn.module):
                                                 
         return bboxes,labels,scores
 
+    def _suppress(self, predicted_roi_bboxes, predicted_prob,score_threshold,nms_threshold):
+        bboxes = list()
+        labels = list()
+        scores = list()
+
+        for class_index in range(1, self.n_class+1):
+            cls_bbox = predicted_roi_bboxes.reshape((-1, self.n_class+1, 4))[:, class_index, :]
+            class_prob = predicted_prob[:, class_index]
+            
+            # for current class, keep the top-K bboxes with highest scores
+            mask = class_prob > score_threshold
+            cls_bbox = cls_bbox[mask]
+            class_prob = class_prob[mask]
+            
+            keep = nms(cls_bbox[:,[1,0,3,2]],class_prob,nms_threshold)
+            
+            # keep top-K bboxes only if there is at least one bbox left for current class
+            if keep.shape[0] > 0:
+                bboxes.append(cls_bbox[keep])
+                labels.append(((class_index) * torch.ones((len(keep),),dtype=torch.int32)).to(self.device))
+                scores.append(class_prob[keep])
+        
+        #  concatenate all bboxes and scores only if there is at least one bbox left for 
+        #  any class, elsewise return empty tensors
+        if len(bboxes) > 0:
+            bboxes = torch.cat(bboxes, dim=0).to(self.device)
+            labels = torch.cat(labels, dim=0).to(self.device)
+            scores = torch.cat(scores, dim=0).to(self.device)
+        else:
+            bboxes = torch.empty((0, 4),device=self.device)
+            labels = torch.empty((0,), device=self.device)
+            scores = torch.empty((0,), device=self.device)
+
+        return bboxes,labels, scores 

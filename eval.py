@@ -27,6 +27,8 @@
 import sys
 import os
 
+from r_fcn.r_fcn_evaluator import RFCNEvaluator
+
 
 
 work_folder= os.path.dirname(os.path.realpath(__file__))
@@ -41,6 +43,16 @@ from voc_dataset import VOCDataset
 from config import combine_configs
 from checkpoint_tool import load_checkpoint
 
+def evaluate_faster_rcnn(config, test_voc_dataset, device, ckpt):
+    evaluator = FasterRCNNEvaluator(config,test_voc_dataset,device)
+    map = evaluator.evaluate(ckpt['faster_rcnn_model'])
+    return map
+
+def evaluate_r_fcn(config, test_voc_dataset, device, ckpt):
+    evaluator = RFCNEvaluator(config,test_voc_dataset,device)
+    map = evaluator.evaluate(ckpt['r_fcn_model'])
+    return map
+
 
 def test():
     torch.manual_seed(0)
@@ -51,9 +63,9 @@ def test():
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     ckpt = load_checkpoint(config.FASTER_RCNN.PRETRAINED_MODEL_PATH,load_best=True)
-    evaluator = FasterRCNNEvaluator(config,test_voc_dataset,device)
-    map = evaluator.evaluate(ckpt['faster_rcnn_model'])
+    map = evaluate_faster_rcnn(config, test_voc_dataset, device, ckpt)
     return map
+
 
 if __name__=="__main__":
     map = test()

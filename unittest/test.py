@@ -291,7 +291,7 @@ class TestFastRCNN(unittest.TestCase):
         print(cls_loss)
         print(reg_loss)
 
-unittest.skip('passed')
+@unittest.skip('passed')
 class TestFasterRCNN(unittest.TestCase):
     def setUp(self) -> None:
         self.writer = SummaryWriter(config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))

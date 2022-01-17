@@ -38,13 +38,13 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data.dataloader import DataLoader
 from torchmetrics.detection.map import MAP
-from yacs.config import CfgNode
-from faster_rcnn.faster_rcnn_evaluator import FasterRCNNEvaluator 
 
-from faster_rcnn.faster_rcnn_network import FasterRCNN
+from yacs.config import CfgNode
+from position_sensitive_fcn.position_senstive_network_loss import PositionSensitiveNetworkLoss
+from r_fcn.r_fcn_evaluator import RFCNEvaluator
+from r_fcn.r_fcn_network import RFCN
 from rpn.proposal_target_creator import ProposalTargetCreator
 from rpn.region_proposal_network_loss import RPNLoss
-from fast_rcnn.fast_rcnn_loss import FastRCNNLoss
 from visual_tool import draw_img_bboxes_labels
 from checkpoint_tool import  load_checkpoint, save_checkpoint
 
@@ -63,18 +63,22 @@ class RFCNTrainer:
         self.device = device
         self.epoches = train_config.R_FCN.EPOCHS
         self.train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=True,num_workers=train_config.R_FCN.NUM_WORKERS)    
-        self.faster_rcnn = FasterRCNN(train_config,device)
-        self.feature_extractor = self.faster_rcnn.feature_extractor
-        self.rpn = self.faster_rcnn.rpn
-        self.fast_rcnn = self.faster_rcnn.fast_rcnn
-        self.anchor_creator = self.faster_rcnn.anchor_creator
-        self.proposal_creator = self.faster_rcnn.proposal_creator
-        self.proposal_target_creator = ProposalTargetCreator(train_config)
+    
+        self.r_fcn = RFCN(train_config,device)
+        self.feature_extractor = self.r_fcn.feature_extractor
+        self.rpn = self.r_fcn.rpn
         self.rpn_loss  = RPNLoss(train_config,device)   
-        self.fast_rcnn_loss = FastRCNNLoss(train_config,device)
+
+    
+        self.anchor_creator = self.r_fcn.anchor_creator
+        self.proposal_creator = self.r_fcn.proposal_creator
+        self.proposal_target_creator = ProposalTargetCreator(train_config)
+
+        self.ps_net = self.r_fcn.ps_net
+        self.ps_net_loss = PositionSensitiveNetworkLoss(train_config,device)
         
         
-        self.optimizer = optim.SGD( self.faster_rcnn.parameters(),
+        self.optimizer = optim.SGD( self.r_fcn.parameters(),
                                     lr=train_config.R_FCN.LEARNING_RATE,
                                     momentum=train_config.R_FCN.MOMENTUM,
                                     weight_decay=train_config.R_FCN.WEIGHT_DECAY)
@@ -87,9 +91,8 @@ class RFCNTrainer:
         self.resume = train_config.R_FCN.RESUME
         self.checkpoint_path = train_config.CHECKPOINT.CHECKPOINT_PATH
         
-        
         if eval_config is not None:
-            self.evaluator = FasterRCNNEvaluator(eval_config,eval_dataset,device)
+            self.evaluator = RFCNEvaluator(eval_config,eval_dataset,device)
             self.best_map_50 = 0
         else:
             self.evaluator = None
@@ -163,10 +166,10 @@ class RFCNTrainer:
                                                                                                 gt_labels
                                                                                             )
                     
-                    predicted_sampled_roi_cls_score,predicted_sampled_roi_offset = self.fast_rcnn.predict(feature,sampled_roi)
+                    predicted_sampled_roi_cls_score,predicted_sampled_roi_offset = self.ps_net.predict(feature.detach(),sampled_roi)
                     
                     # roi loss
-                    roi_cls_loss,roi_reg_loss = self.fast_rcnn_loss.compute(predicted_sampled_roi_cls_score,
+                    roi_cls_loss,roi_reg_loss = self.ps_net_loss.compute(predicted_sampled_roi_cls_score,
                                                                     predicted_sampled_roi_offset,
                                                                     gt_label_for_sampled_roi,
                                                                     gt_offset_for_sampled_roi)                                                                    
@@ -194,7 +197,7 @@ class RFCNTrainer:
             # evaluate the model on test set for current epoch    
             is_best = False
             if self.evaluator is not None:
-                eval_result =self.evaluator.evaluate(copy.deepcopy(self.faster_rcnn.state_dict()))
+                eval_result =self.evaluator.evaluate(copy.deepcopy(self.r_fcn.state_dict()))
                 self.writer.add_scalar('eval/map',eval_result['map'].item(),steps)
                 self.writer.add_scalar('eval/map_50',eval_result['map_50'].item(),steps)
 
@@ -204,7 +207,7 @@ class RFCNTrainer:
                     self.best_map_50 = eval_result['map_50'].item()
                     
             checkpoint = {
-                'faster_rcnn_model': self.faster_rcnn.state_dict(),
+                'r_fcn_model': self.r_fcn.state_dict(),
                 'epoch': epoch,
                 'steps': steps,
                 'optimizer': self.optimizer.state_dict(),
@@ -227,7 +230,7 @@ class RFCNTrainer:
         self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 
         with torch.no_grad():
-            predicted_bboxes_batch, predicted_labels_batch, _,= self.faster_rcnn.predict(images_batch.float())
+            predicted_bboxes_batch, predicted_labels_batch, _,= self.r_fcn.predict(images_batch.float())
                         
             predicted_labels_for_img_0 = predicted_labels_batch[0]
             predicted_label_names_for_img_0 = []
@@ -257,7 +260,7 @@ class RFCNTrainer:
 
     def _resume(self):
         self.checkpoint = load_checkpoint(self.checkpoint_path) # custom method for loading last checkpoint
-        self.faster_rcnn.load_state_dict(self.checkpoint['faster_rcnn_model'])
+        self.r_fcn.load_state_dict(self.checkpoint['r_fcn_model'])
         self.optimizer.load_state_dict(self.checkpoint['optimizer'])
         self.scheduler.load_state_dict(self.checkpoint['scheduler'])
         start_epoch = self.checkpoint['epoch']
