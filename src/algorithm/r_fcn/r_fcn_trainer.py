@@ -166,7 +166,7 @@ class RFCNTrainer:
                                                                                                 gt_labels
                                                                                             )
                     
-                    predicted_sampled_roi_cls_score,predicted_sampled_roi_offset = self.ps_net.predict(feature.detach(),sampled_roi)
+                    predicted_sampled_roi_cls_score,predicted_sampled_roi_offset = self.ps_net.predict(feature,sampled_roi)
                     
                     # roi loss
                     roi_cls_loss,roi_reg_loss = self.ps_net_loss.compute(predicted_sampled_roi_cls_score,
@@ -177,17 +177,24 @@ class RFCNTrainer:
                     total_roi_cls_loss = total_roi_cls_loss + roi_cls_loss
                     total_roi_reg_loss = total_roi_reg_loss + roi_reg_loss
                 
-                total_loss = total_rpn_cls_loss + \
-                                total_rpn_reg_loss+ \
-                                total_roi_cls_loss+ \
-                                total_roi_reg_loss
+                total_loss = total_rpn_cls_loss + total_rpn_reg_loss+ total_roi_cls_loss+ total_roi_reg_loss
                                 
                 self.optimizer.zero_grad()
                 total_loss.backward()                    
                 self.optimizer.step()
 
                 if steps%self.train_config.R_FCN.CHECK_FREQUENCY==0:
-                    self._check_progress(steps, total_loss, images_batch, bboxes_batch, labels_batch,img_height, img_width)
+                    self._check_progress(steps,
+                                        total_loss,
+                                        total_rpn_cls_loss, 
+                                        total_rpn_reg_loss,
+                                        total_roi_cls_loss,
+                                        total_roi_reg_loss,
+                                        images_batch, 
+                                        bboxes_batch,
+                                        labels_batch,
+                                        img_height, 
+                                        img_width)
                 
                 steps += 1
             
@@ -219,6 +226,10 @@ class RFCNTrainer:
     def _check_progress(self, 
                         steps, 
                         total_loss,
+                        total_rpn_cls_loss, 
+                        total_rpn_reg_loss,
+                        total_roi_cls_loss,
+                        total_roi_reg_loss,
                         images_batch,
                         bboxes_batch,
                         labels_batch,
@@ -227,6 +238,11 @@ class RFCNTrainer:
                     ):
 
         self.writer.add_scalar('total_loss',total_loss.item(),steps)
+        self.writer.add_scalar('total_rpn_cls_loss',total_rpn_cls_loss.item(),steps)
+        self.writer.add_scalar('total_rpn_reg_loss',total_rpn_reg_loss.item(),steps)
+        self.writer.add_scalar('total_roi_cls_loss',total_roi_cls_loss.item(),steps)
+        self.writer.add_scalar('total_roi_reg_loss',total_roi_reg_loss.item(),steps)
+
         self.writer.add_scalar('lr',self.optimizer.param_groups[0]['lr'],steps)
 
         with torch.no_grad():

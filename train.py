@@ -59,8 +59,8 @@ def train_r_fcn(train_config, train_voc_dataset, eval_config, eval_voc_dataset, 
                                 eval_voc_dataset,
                                 device=device)
     
-    with torch.autograd.detect_anomaly():
-        r_fcn_trainer.train()
+    
+    r_fcn_trainer.train()
 
 
 if __name__=="__main__":

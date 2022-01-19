@@ -31,7 +31,7 @@ from torch.types import Device
 from torchvision.ops import PSRoIPool
 
 from yacs.config import CfgNode
-from common import CNNBlock
+from common import CNNBlock, weights_normal_init
 
 class PositionSensitiveNetwork(nn.Module):
 
@@ -42,14 +42,18 @@ class PositionSensitiveNetwork(nn.Module):
         self.config = config
         self.device = device
 
-        self.double_channel_conv = CNNBlock(config.R_FCN.IN_CHANNELS,2*config.R_FCN.IN_CHANNELS,1)
-        self.score_map_conv =CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1),1)
+        self.double_channel_conv = CNNBlock(config.R_FCN.IN_CHANNELS,2*config.R_FCN.IN_CHANNELS,1,bn=True)
+        self.score_map_conv =CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1),1,bn=True)
         self.ps_roi_pool_class = PSRoIPool(output_size=config.R_FCN.POOL_SIZE,spatial_scale=1.0/config.R_FCN.FEATURE_STRIDE)
         self.class_avg_pool = nn.AvgPool2d(kernel_size=config.R_FCN.POOL_SIZE,stride=config.R_FCN.POOL_SIZE)
 
-        self.bbox_map_conv = CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1)*4,1)
+        self.bbox_map_conv = CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1)*4,1,bn=True)
         self.ps_roi_pool_bbox = PSRoIPool(output_size=config.R_FCN.POOL_SIZE,spatial_scale=1.0/config.R_FCN.FEATURE_STRIDE)
         self.bbox_avg_pool = nn.AvgPool2d(kernel_size=config.R_FCN.POOL_SIZE,stride=config.R_FCN.POOL_SIZE)
+
+        weights_normal_init(self.double_channel_conv, dev=0.001)
+        weights_normal_init(self.score_map_conv, dev=0.01)
+        weights_normal_init(self.bbox_map_conv, dev=0.01)
 
     def predict(self,
                 feature:torch.Tensor,

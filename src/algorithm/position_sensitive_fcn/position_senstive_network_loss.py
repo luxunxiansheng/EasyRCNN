@@ -70,7 +70,7 @@ class PositionSensitiveNetworkLoss(nn.Module):
         target_offsets    = positive_wieight * target_offsets
 
         regression_loss = self._soomth_l1_loss(predicted_offsets,target_offsets,self.roi_sigma)
-        regression_loss = regression_loss /((target_labels>0).sum().float())
+        regression_loss = regression_loss /((target_labels>=0).sum().float())
 
         return classfication_loss,regression_loss
 
