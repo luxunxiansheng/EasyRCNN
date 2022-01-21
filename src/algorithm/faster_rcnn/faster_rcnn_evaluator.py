@@ -53,6 +53,7 @@ class FasterRCNNEvaluator(object):
 
     def evaluate(self,model_states):    
         self.metric.reset()
+        self.eval_faster_rcnn.eval()
         self.eval_faster_rcnn.load_state_dict(model_states)
 
         for _,(images_batch,bboxes_batch,labels_batch,_,img_id,_) in tqdm(enumerate(self.dataloader)):

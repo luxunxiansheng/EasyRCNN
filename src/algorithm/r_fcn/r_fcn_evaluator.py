@@ -52,6 +52,8 @@ class RFCNEvaluator(object):
         
     def evaluate(self,model_states):
         self.metric.reset()
+        
+        self.eval_r_fcn.eval()
         self.eval_r_fcn.load_state_dict(model_states)
 
         for _,(images_batch,bboxes_batch,labels_batch,_,img_id,_) in tqdm(enumerate(self.dataloader)):
