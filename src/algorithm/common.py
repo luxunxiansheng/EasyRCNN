@@ -35,14 +35,13 @@ class CNNBlock(nn.Module):
                 stride:int=1,
                 relu:bool=True, 
                 same_padding:bool=False, 
-                bias:bool=True,
-                bn:bool=False):
+                bn:bool=True):
         super().__init__()
         # Note: Only support stride 1 for now
         padding = int((kernel_size - 1) / 2) if same_padding else 0
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding=padding,bias=bias)
-        self.bn = nn.BatchNorm2d(out_channels, eps=0.001, momentum=0, affine=True) if bn else None
-        self.relu = nn.ReLU(inplace=False) if relu else None
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding=padding)
+        self.bn = nn.BatchNorm2d(out_channels) if bn else None
+        self.relu = nn.ReLU() if relu else None
 
     def forward(self, x:torch.Tensor):
         x = self.conv(x)

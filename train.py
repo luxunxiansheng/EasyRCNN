@@ -67,17 +67,17 @@ if __name__=="__main__":
     torch.manual_seed(0)
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     torch.cuda.empty_cache()
-    train_config_path = work_folder+'/src/config/train/experiments/exp02_config.yaml'
+    train_config_path = work_folder+'/src/config/train/experiments/exp01_config.yaml'
     train_config = combine_configs(train_config_path)
     train_voc_dataset = VOCDataset(train_config)
     
-    eval_config_path = work_folder+'/src/config/eval/eval2.yaml'
+    eval_config_path = work_folder+'/src/config/eval/eval1.yaml'
     eval_config = combine_configs(eval_config_path)
     eval_voc_dataset = VOCDataset(eval_config,split='test')
 
     writer = SummaryWriter(train_config.LOG.LOG_DIR+"/"+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    train_r_fcn(train_config, train_voc_dataset, eval_config, eval_voc_dataset, writer, device)
+    train_faster_rcnn(train_config, train_voc_dataset, eval_config, eval_voc_dataset, writer, device)
     writer.flush()
     writer.close()
 
