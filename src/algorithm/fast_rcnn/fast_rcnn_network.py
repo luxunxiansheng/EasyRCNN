@@ -45,6 +45,8 @@ class FastRCNN(nn.Module):
         self.offset = nn.Linear(config.FAST_RCNN.FC7_CHANNELS,(self.n_classes+1) * 4)
         self.score = nn.Linear(config.FAST_RCNN.FC7_CHANNELS, self.n_classes+1)
         
+        weights_normal_init(self.fc6, dev=0.01)
+        weights_normal_init(self.fc7, dev=0.01)
         weights_normal_init(self.offset, 0.001)
         weights_normal_init(self.score,0.01)
 

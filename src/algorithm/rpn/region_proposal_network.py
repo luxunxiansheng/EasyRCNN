@@ -41,7 +41,7 @@ class RPN(nn.Module):
 
         weights_normal_init(self.conv1, dev=0.01)
         weights_normal_init(self.score_conv, dev=0.01)
-        weights_normal_init(self.bbox_conv, dev=0.01)
+        weights_normal_init(self.bbox_conv, dev=0.001)
 
     def forward(self,features:torch.Tensor):
         """
