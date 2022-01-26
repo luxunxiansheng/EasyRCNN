@@ -106,9 +106,6 @@ class FasterRCNNTrainer:
             # train the model for current epoch
             for _,(images_batch,bboxes_batch,labels_batch,_,ids,scales) in tqdm(enumerate(self.train_dataloader)):
 
-                if bboxes_batch.shape[1]==0:
-                    continue
-
                 images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
                 
                 # extract the batch feature map from images

@@ -155,9 +155,7 @@ class VOCDataset(data.Dataset):
         
         # HWC->CHW  
         image = self.toTensor(image=image)['image']
-        bboxes = torch.tensor(bboxes,dtype=torch.float32)
-        if len(bboxes) > 0:
-            bboxes = bboxes[:,[1,0,3,2]] 
+        bboxes = torch.tensor(bboxes,dtype=torch.float32)[:,[1,0,3,2]]
         
         category_id = torch.tensor(category_id,dtype=torch.long)
         difficult = torch.tensor(difficult, dtype=torch.uint8)
