@@ -132,13 +132,6 @@ class VOCDataset(data.Dataset):
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        if self.augmented:
-            augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
-            image = augmented['image']
-            bboxes = augmented['bboxes']
-            category_id = augmented['category_id']
-
-
         # ** resize the smallest side to the min size ** 
         scale_smallest_max_size = self.scale_smallest_max_size(image=image,bboxes=bboxes,category_id=category_id)
         image = scale_smallest_max_size['image']
@@ -152,6 +145,13 @@ class VOCDataset(data.Dataset):
             image = scale_longest_max_size['image']
             bboxes = scale_longest_max_size['bboxes']
             category_id = scale_longest_max_size['category_id']
+
+
+        if self.augmented:
+            augmented = self.transforms(image=image, bboxes=bboxes, category_id=category_id)
+            image = augmented['image']
+            bboxes = augmented['bboxes']
+            category_id = augmented['category_id']    
         
         # HWC->CHW  
         image = self.toTensor(image=image)['image']
