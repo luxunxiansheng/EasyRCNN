@@ -35,9 +35,10 @@ class RPN(nn.Module):
         super().__init__()
     
         self.num_base_anchors = len(config.RPN.ANCHOR_CREATOR.ANCHOR_SCALES)**2
-        self.conv1 = CNNBlock(config.RPN.FEATURE_CHANNELS, config.RPN.MID_CHANNELS, 3,  relu=False,bn=False, same_padding=True)
-        self.score_conv = CNNBlock(config.RPN.MID_CHANNELS, self.num_base_anchors*2, 1, relu=False,bn=False)
-        self.bbox_conv = CNNBlock(config.RPN.MID_CHANNELS,  self.num_base_anchors*4, 1, relu=False,bn=False)
+        
+        self.conv1 = CNNBlock(config.RPN.FEATURE_CHANNELS, config.RPN.MID_CHANNELS, 3, same_padding=True)
+        self.score_conv = CNNBlock(config.RPN.MID_CHANNELS, self.num_base_anchors*2, 1, relu=False, same_padding=False)
+        self.bbox_conv = CNNBlock(config.RPN.MID_CHANNELS,  self.num_base_anchors*4, 1, relu=False, same_padding=False)
 
         weights_normal_init(self.conv1, dev=0.01)
         weights_normal_init(self.score_conv, dev=0.01)

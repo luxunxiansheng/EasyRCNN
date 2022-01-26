@@ -35,7 +35,7 @@ class CNNBlock(nn.Module):
                 stride:int=1,
                 relu:bool=True, 
                 same_padding:bool=False, 
-                bn:bool=True):
+                bn:bool=False):
         super().__init__()
         # Note: Only support stride 1 for now
         padding = int((kernel_size - 1) / 2) if same_padding else 0
