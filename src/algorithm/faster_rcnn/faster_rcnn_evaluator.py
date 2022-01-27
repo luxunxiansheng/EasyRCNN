@@ -61,7 +61,7 @@ class FasterRCNNEvaluator(object):
             images_batch,bboxes_batch,labels_batch = images_batch.to(self.device),bboxes_batch.to(self.device),labels_batch.to(self.device)
             with torch.no_grad():
                 predicted_bboxes_batch,predicted_labels_batch, predicted_scores_batch= self.eval_faster_rcnn.predict(images_batch.float())
-
+                
             for img_idx in range(len(images_batch)):
                 pred_bboxes= predicted_bboxes_batch[img_idx]
                 pred_scores = predicted_scores_batch[img_idx]
@@ -81,6 +81,6 @@ class FasterRCNNEvaluator(object):
                                         )]
 
                 self.metric.update(single_image_predict,single_image_gt)
-
+                
         return self.metric.compute()
                         

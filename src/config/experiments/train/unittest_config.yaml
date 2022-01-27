@@ -1,0 +1,21 @@
+FASTER_RCNN:
+  FEATRUE_EXTRACTOR: 'pretrained_vgg16'
+  NUM_WORKERS: 1
+  
+  CHECK_FREQUENCY: 1000
+  EPOCHS: 2
+  RESUME: False
+  STEP_SIZE: 3
+
+
+VOC_DATASET:
+  AUGMENTED: True
+
+CHECKPOINT:
+  CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/unittest/model_checkpoint.ckpt'
+  
+LOG:
+  LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/unittest'
+
+
+

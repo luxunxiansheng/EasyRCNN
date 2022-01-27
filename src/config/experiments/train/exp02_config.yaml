@@ -1,0 +1,18 @@
+R_FCN:
+  NUM_WORKERS: 2
+  
+  CHECK_FREQUENCY: 100
+  EPOCHS: 60
+  RESUME: False
+  STEP_SIZE: 40
+  LEARNING_RATE_DECAY: 0.1
+
+CHECKPOINT:
+  CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp02/model_checkpoint.ckpt'
+  
+LOG:
+  LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp02'
+
+
+VOC_DATASET:
+    AUGMENTED: True

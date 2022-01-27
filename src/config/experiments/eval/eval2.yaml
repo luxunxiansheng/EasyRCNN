@@ -1,0 +1,13 @@
+RPN:
+    PROPOSAL_CREATOR:
+        N_PRE_NMS: 6000
+        N_POST_NMS: 300
+
+R_FCN:
+    SCORE_THRESHOLD : 0.05
+    NUM_WORKERS : 8
+    PRETRAINED_MODEL_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp02'
+
+VOC_DATASET:
+    AUGMENTED: False
+
