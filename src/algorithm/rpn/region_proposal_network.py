@@ -36,7 +36,7 @@ class RPN(nn.Module):
     
         self.num_base_anchors = len(config.RPN.ANCHOR_CREATOR.ANCHOR_SCALES)**2
         
-        self.conv1 = CNNBlock(config.RPN.FEATURE_CHANNELS, config.RPN.MID_CHANNELS, 3, same_padding=True)
+        self.conv1 = CNNBlock(config.RPN.FEATURE_CHANNELS, config.RPN.MID_CHANNELS, 3, bn=True, same_padding=True)
         self.score_conv = CNNBlock(config.RPN.MID_CHANNELS, self.num_base_anchors*2, 1, relu=False, same_padding=False)
         self.bbox_conv = CNNBlock(config.RPN.MID_CHANNELS,  self.num_base_anchors*4, 1, relu=False, same_padding=False)
 
