@@ -42,13 +42,13 @@ class PositionSensitiveNetwork(nn.Module):
         self.config = config
         self.device = device
 
-        self.double_channel_conv = CNNBlock(config.R_FCN.IN_CHANNELS,2*config.R_FCN.IN_CHANNELS,1)
+        self.double_channel_conv = CNNBlock(config.R_FCN.IN_CHANNELS,2*config.R_FCN.IN_CHANNELS,1,bn=True,same_padding=True)
         
-        self.score_map_conv =CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1),1,relu=False,bn=False,same_padding=True)
+        self.score_map_conv =CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1),1,relu=False,same_padding=True)
         self.ps_roi_pool_class = PSRoIPool(output_size=config.R_FCN.POOL_SIZE,spatial_scale=1.0/config.R_FCN.FEATURE_STRIDE)
         self.class_avg_pool = nn.AvgPool2d(kernel_size=config.R_FCN.POOL_SIZE,stride=config.R_FCN.POOL_SIZE)
 
-        self.bbox_map_conv = CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1)*4,1,relu=False,bn=False,same_padding=True)
+        self.bbox_map_conv = CNNBlock(2*config.R_FCN.IN_CHANNELS,config.R_FCN.POOL_SIZE**2*(config.R_FCN.NUM_CLASSES+1)*4,1,relu=False,same_padding=True)
         self.ps_roi_pool_bbox = PSRoIPool(output_size=config.R_FCN.POOL_SIZE,spatial_scale=1.0/config.R_FCN.FEATURE_STRIDE)
         self.bbox_avg_pool = nn.AvgPool2d(kernel_size=config.R_FCN.POOL_SIZE,stride=config.R_FCN.POOL_SIZE)
 

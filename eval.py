@@ -53,13 +53,13 @@ def evaluate_r_fcn(config, test_voc_dataset, device, ckpt):
 def test():
     torch.manual_seed(0)
     
-    test_config_path = work_folder+'/src/config/experiments/eval/eval1.yaml'
+    test_config_path = work_folder+'/src/config/experiments/eval/eval2.yaml'
     config = combine_configs(test_config_path)
     test_voc_dataset = VOCDataset(config,split='test')
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
-    ckpt = load_checkpoint(config.FASTER_RCNN.PRETRAINED_MODEL_PATH,load_best=True)
-    map = evaluate_faster_rcnn(config, test_voc_dataset, device, ckpt)
+    ckpt = load_checkpoint(config.R_FCN.PRETRAINED_MODEL_PATH,load_best=True)
+    map = evaluate_r_fcn(config, test_voc_dataset, device, ckpt)
     return map
 
 
