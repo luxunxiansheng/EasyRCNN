@@ -1,11 +1,11 @@
 R_FCN:
-  NUM_WORKERS: 2
-  
-  CHECK_FREQUENCY: 500
+  NUM_WORKERS: 2  
+  CHECK_FREQUENCY: 1000
   EPOCHS: 100
-  RESUME: False
-  STEP_SIZE: 90
+  STEP_SIZE: 40
   LEARNING_RATE_DECAY: 0.1
+  LEARNING_RATE : 0.002
+  RESUME: False
 
 CHECKPOINT:
   CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp02/model_checkpoint.ckpt'

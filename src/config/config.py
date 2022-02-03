@@ -45,6 +45,10 @@ _C.LOG.LOG_DIR = '/media/yan/D/ornot/workspace/object_detection/log'
 _C.CHECKPOINT = ConfigNode()
 _C.CHECKPOINT.CHECKPOINT_PATH = '/media/yan/D/ornot/workspace/object_detection/checkpoint/model_checkpoint.ckpt'
 
+# ————————————————————————PRETRAINED MODEL——————————————————————————————————————— #
+_C.PRETRAINED_MODEL = ConfigNode()
+_C.PRETRAINED_MODEL.MODEL_PATH = None
+
 # ----------------------- DATASET ------------------------------------------------- #
 _C.VOC_DATASET = ConfigNode()
 _C.VOC_DATASET.DATA_DIR ='/home/yan/data/VOCdevkit/VOC2007'
@@ -144,7 +148,6 @@ _C.R_FCN.LEARNING_RATE_DECAY = 0.1
 _C.R_FCN.MOMENTUM = 0.9
 
 _C.R_FCN.RESUME = False
-_C.R_FCN.PRETRAINED_MODEL_PATH = None
 _C.R_FCN.CHECK_FREQUENCY = 100
 
 
