@@ -25,9 +25,11 @@
 # /
 
 
+import imp
 import torch
 import torch.nn as nn
 from torchvision.ops import RoIPool
+from torchvision.ops import RoIAlign
 
 from common import FCBlock, weights_normal_init
 
@@ -37,8 +39,10 @@ class FastRCNN(nn.Module):
     
         self.n_classes = config.FAST_RCNN.NUM_CLASSES
 
-        self.roi_pool = RoIPool((config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.ROI_SIZE),config.FAST_RCNN.SPATIAL_SCALE)
-
+        #self.roi_pool = RoIPool((config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.ROI_SIZE),config.FAST_RCNN.SPATIAL_SCALE)
+        
+        self.roi_pool = RoIAlign((config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.ROI_SIZE),config.FAST_RCNN.SPATIAL_SCALE,-1)
+        
         self.fc6 = FCBlock(config.FAST_RCNN.IN_CHANNELS*config.FAST_RCNN.ROI_SIZE*config.FAST_RCNN.ROI_SIZE,config.FAST_RCNN.FC7_CHANNELS)
         self.fc7 = FCBlock(config.FAST_RCNN.FC7_CHANNELS, config.FAST_RCNN.FC7_CHANNELS)
         
