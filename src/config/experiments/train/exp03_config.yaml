@@ -1,0 +1,23 @@
+RPN:
+  ANCHOR_CREATOR:
+    FEATURE_STRIDE: 32
+
+FASTER_RCNN:
+  NUM_WORKERS: 2
+  FEATRUE_EXTRACTOR: 'pretrained_resnet50'
+  
+  CHECK_FREQUENCY: 500
+  EPOCHS: 30
+  RESUME: False
+  STEP_SIZE: 20
+  LEARNING_RATE_DECAY: 0.1
+
+CHECKPOINT:
+  CHECKPOINT_PATH: '/media/yan/D/ornot/workspace/object_detection/checkpoint/exp01/model_checkpoint.ckpt'
+  
+LOG:
+  LOG_DIR: '/media/yan/D/ornot/workspace/object_detection/log/exp01'
+
+
+VOC_DATASET:
+    AUGMENTED: True

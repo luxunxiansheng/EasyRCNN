@@ -151,7 +151,7 @@ class TestProposalCreator(unittest.TestCase):
         roi = self.proposal_creator.create(anchors_of_img, predcited_scores[0], predcited_locs[0],IMG_HEIGHT,IMG_WIDTH,FEATURE_HEIGHT,FEATURE_WIDTH)
         print(roi.shape)
 
-@unittest.skip('passed')
+
 class TestFeatureExtractor(unittest.TestCase):
     def setUp(self) -> None:
         self.factory = FeatureExtractorFactory()
@@ -161,11 +161,18 @@ class TestFeatureExtractor(unittest.TestCase):
         extractor = self.factory.create_feature_extractor('vgg16')
         features = extractor.predict(IMG)
         self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))   
-
+    
+    @unittest.skip("passed")
     def test_pretrained_vgg16_extractor(self):
         extractor = self.factory.create_feature_extractor('pretrained_vgg16')
         features = extractor.predict(IMG)
         self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))
+    
+    @unittest.skip("passed")
+    def test_pretrained_resnet50_extractor(self):
+        extractor = self.factory.create_feature_extractor('pretraind_resnet50')
+        features = extractor.predict(IMG)
+        self.assertTrue(features.shape == torch.Size([1, 512, 25, 25]))
 
 
 @unittest.skip('passed')
@@ -223,7 +230,7 @@ class TestVOCDataset(unittest.TestCase):
         self.writer.add_images('image',imgs,) 
 
 
-@unittest.skip('tested')
+@unittest.skip('passed')
 class TestProposalCreator(unittest.TestCase):
     def setUp(self) -> None:
         self.feature_extractor = FeatureExtractorFactory().create_feature_extractor('vgg16')

@@ -1,5 +1,5 @@
 FASTER_RCNN:
-  FEATRUE_EXTRACTOR: 'pretrained_vgg16'
+  FEATRUE_EXTRACTOR: 'pretrained_resnet50'
   NUM_WORKERS: 1
   
   CHECK_FREQUENCY: 1000

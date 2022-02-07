@@ -27,7 +27,8 @@
 
 import torch
 import torch.nn as nn
-from torchvision.models import vgg16
+from torchvision.models import vgg16, resnet
+from torchvision.ops import misc
 from torchvision import transforms as T
 
 from common import CNNBlock
@@ -146,6 +147,40 @@ class PretrainedVGG16FeatureExtractor(nn.Module):
         return x
         
 
+class PretrainedResnet50FeatureExtractor(nn.Module):
+    def __init__(self, backbone_name, pretrained):
+        super().__init__()
+        body = resnet.__dict__[backbone_name](
+            pretrained=pretrained, norm_layer=misc.FrozenBatchNorm2d)
+        
+        # freeze layer1
+        for name, parameter in body.named_parameters():
+            if 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
+                parameter.requires_grad_(False)
+        
+        # exclude the avgpool layer and fc layer
+        self.body = nn.ModuleDict(d for i, d in enumerate(body.named_children()) if i < 8)
+        in_channels = 2048
+        self.out_channels = 512
+        
+        self.inner_block_module = nn.Conv2d(in_channels, self.out_channels, 1)
+        self.layer_block_module = nn.Conv2d(self.out_channels, self.out_channels, 3, 1, 1)
+        
+        for m in self.children():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_uniform_(m.weight, a=1)
+                nn.init.constant_(m.bias, 0)
+        
+    def forward(self, x):
+        for module in self.body.values():
+            x = module(x)
+        x = self.inner_block_module(x)
+        x = self.layer_block_module(x)
+        return x
+    
+    def predict(self,x):
+        return self.forward(x)
+
 class FeatureExtractorFactory:
     @staticmethod
     def create_feature_extractor(feature_extractor_type: str, **kwargs) -> torch.nn.Module:
@@ -153,8 +188,11 @@ class FeatureExtractorFactory:
             return VGG16FeatureExtractor(**kwargs)
         elif feature_extractor_type == 'pretrained_vgg16':
             return PretrainedVGG16FeatureExtractor(**kwargs)
+        elif feature_extractor_type == 'pretraind_resnet50':
+            return PretrainedResnet50FeatureExtractor('resnet50', True)
         else:
             raise ValueError('Unknown feature extractor type: {}'.format(feature_extractor_type))
+        
         
         
     
