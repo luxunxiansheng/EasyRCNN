@@ -159,8 +159,8 @@ class PretrainedResnet50FeatureExtractor(nn.Module):
                 parameter.requires_grad_(False)
         
         # exclude the avgpool layer and fc layer
-        self.body = nn.ModuleDict(d for i, d in enumerate(body.named_children()) if i < 8)
-        in_channels = 2048
+        self.body = nn.ModuleDict(d for i, d in enumerate(body.named_children()) if i < 7)
+        in_channels = 1024
         self.out_channels = 512
         
         self.inner_block_module = nn.Conv2d(in_channels, self.out_channels, 1)

@@ -168,11 +168,11 @@ class TestFeatureExtractor(unittest.TestCase):
         features = extractor.predict(IMG)
         self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))
     
-    @unittest.skip("passed")
+    #@unittest.skip("passed")
     def test_pretrained_resnet50_extractor(self):
         extractor = self.factory.create_feature_extractor('pretraind_resnet50')
         features = extractor.predict(IMG)
-        self.assertTrue(features.shape == torch.Size([1, 512, 25, 25]))
+        self.assertTrue(features.shape == torch.Size([1, 512, 50, 50]))
 
 
 @unittest.skip('passed')
